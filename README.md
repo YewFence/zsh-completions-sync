@@ -14,7 +14,7 @@ mise run build
 也可以直接运行。
 
 ```sh
-go run . list
+go run ./cmd/zcs list
 ```
 
 ## 使用

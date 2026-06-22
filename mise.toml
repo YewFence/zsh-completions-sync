@@ -15,47 +15,43 @@ pnpm = "11"
 # https://golangci-lint.run/
 golangci-lint = "2"
 
-[tasks.init]
-description = "初始化模板中的项目名称、模块路径和仓库信息"
-run = "GO111MODULE=off go run ./tools/init-template/main.go --fresh-git"
-
 [tasks.tidy]
-description = "整理 Go 模块依赖"
+description = "Tidy Go module dependencies"
 run = "go mod tidy"
 
 [tasks.'tidy:check']
-description = "检查 Go 模块依赖是否已经整理"
+description = "Check whether Go module dependencies are tidy"
 run = "go mod tidy && git diff --exit-code go.mod go.sum"
 
 [tasks.'mod:verify']
-description = "验证 Go 模块依赖"
+description = "Verify Go module dependencies"
 run = "go mod verify"
 
 [tasks.update]
-description = "更新 Go 第三方库并整理模块依赖"
+description = "Update Go dependencies and tidy modules"
 run = "go get -u ./... && go mod tidy"
 
 [tasks.test]
-description = "运行 Go 测试"
+description = "Run Go tests"
 run = "go test -v ./..."
 
 [tasks.fmt]
-description = "检查 Go 代码格式"
+description = "Check Go code formatting"
 raw = true
 run = "golangci-lint fmt -E gofmt --diff"
 
 [tasks.vet]
-description = "运行 Go 静态检查"
+description = "Run Go static checks"
 raw = true
 run = "go vet ./..."
 
 [tasks.lint]
-description = "运行 Go lint 检查"
+description = "Run Go lint checks"
 raw = true
 run = "golangci-lint run"
 
 [tasks.check]
-description = "运行 Go 格式、静态检查、构建和 lint"
+description = "Run Go formatting checks, static checks, build, and lint"
 run = [
   { task = "fmt" },
   { task = "vet" },
@@ -63,37 +59,45 @@ run = [
   { task = "lint" },
 ]
 
-[tasks.run]
-description = "运行 CLI"
-run = "go run ."
+[tasks.cli]
+description = "Run the CLI"
+run = "go run ./cmd/zcs"
+
+[tasks.'cli:install']
+description = "Install the CLI into the local Go bin directory"
+run = 'go install -trimpath -ldflags="-X main.version=${BUILD_VERSION:-dev}" ./cmd/zcs'
+
+[tasks.build]
+description = "Build the CLI executable"
+run = 'go build -trimpath -ldflags="-s -w -X main.version=${BUILD_VERSION:-dev}" -o "${BUILD_OUTPUT_DIR:-bin}/zcs" ./cmd/zcs'
 
 [tasks.'action:update']
-description = "交互式更新 GitHub Action 版本并默认固定为提交哈希"
+description = "Interactively update GitHub Action versions and pin to commit hashes by default"
 run = "actions-up"
 
 [tasks.'action:update:all']
-description = "自动更新全部 GitHub Action 版本并默认固定为提交哈希"
+description = "Automatically update all GitHub Action versions and pin to commit hashes by default"
 run = "actions-up --yes"
 
 [tasks.'docs:install']
-description = "安装文档站依赖"
+description = "Install documentation site dependencies"
 dir = "docs"
 run = "pnpm install"
 
 [tasks.'docs:dev']
-description = "启动 VitePress 文档站"
+description = "Start the VitePress documentation site"
 depends = ["docs:install"]
 dir = "docs"
 run = "pnpm dev"
 
 [tasks.'docs:build']
-description = "构建 VitePress 文档站"
+description = "Build the VitePress documentation site"
 depends = ["docs:install"]
 dir = "docs"
 run = "pnpm build"
 
 [tasks.'docs:preview']
-description = "预览 VitePress 文档站"
+description = "Preview the VitePress documentation site"
 depends = ["docs:install"]
 dir = "docs"
 run = "pnpm preview"
