@@ -1,0 +1,99 @@
+[settings]
+lockfile = true
+
+[tools]
+# https://go.dev/
+go = "1"
+# https://nodejs.org/
+node = "26"
+# https://github.com/azat-io/actions-up
+"npm:actions-up" = "1"
+# https://github.com/paulhatch/semantic-version
+"npm:@semanticversion/cli" = "latest"
+# https://pnpm.io/
+pnpm = "11"
+# https://golangci-lint.run/
+golangci-lint = "2"
+
+[tasks.init]
+description = "初始化模板中的项目名称、模块路径和仓库信息"
+run = "GO111MODULE=off go run ./tools/init-template/main.go --fresh-git"
+
+[tasks.tidy]
+description = "整理 Go 模块依赖"
+run = "go mod tidy"
+
+[tasks.'tidy:check']
+description = "检查 Go 模块依赖是否已经整理"
+run = "go mod tidy && git diff --exit-code go.mod go.sum"
+
+[tasks.'mod:verify']
+description = "验证 Go 模块依赖"
+run = "go mod verify"
+
+[tasks.update]
+description = "更新 Go 第三方库并整理模块依赖"
+run = "go get -u ./... && go mod tidy"
+
+[tasks.test]
+description = "运行 Go 测试"
+run = "go test -v ./..."
+
+[tasks.fmt]
+description = "检查 Go 代码格式"
+raw = true
+run = "golangci-lint fmt -E gofmt --diff"
+
+[tasks.vet]
+description = "运行 Go 静态检查"
+raw = true
+run = "go vet ./..."
+
+[tasks.lint]
+description = "运行 Go lint 检查"
+raw = true
+run = "golangci-lint run"
+
+[tasks.check]
+description = "运行 Go 格式、静态检查、构建和 lint"
+run = [
+  { task = "fmt" },
+  { task = "vet" },
+  { task = "build" },
+  { task = "lint" },
+]
+
+[tasks.run]
+description = "运行 CLI"
+run = "go run ."
+
+[tasks.'action:update']
+description = "交互式更新 GitHub Action 版本并默认固定为提交哈希"
+run = "actions-up"
+
+[tasks.'action:update:all']
+description = "自动更新全部 GitHub Action 版本并默认固定为提交哈希"
+run = "actions-up --yes"
+
+[tasks.'docs:install']
+description = "安装文档站依赖"
+dir = "docs"
+run = "pnpm install"
+
+[tasks.'docs:dev']
+description = "启动 VitePress 文档站"
+depends = ["docs:install"]
+dir = "docs"
+run = "pnpm dev"
+
+[tasks.'docs:build']
+description = "构建 VitePress 文档站"
+depends = ["docs:install"]
+dir = "docs"
+run = "pnpm build"
+
+[tasks.'docs:preview']
+description = "预览 VitePress 文档站"
+depends = ["docs:install"]
+dir = "docs"
+run = "pnpm preview"
