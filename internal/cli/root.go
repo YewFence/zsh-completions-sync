@@ -13,20 +13,27 @@ func NewRootCommand(version string) *cobra.Command {
 		Short: "Synchronize zsh completion scripts",
 		Long:  "Synchronize zsh completion scripts into global and project-local completion directories.",
 	}
-	rootCmd.AddCommand(newSyncCommand("project", "Generate project-local completions."))
-	rootCmd.AddCommand(newSyncCommand("global", "Generate global completions."))
+	rootCmd.AddCommand(newGenerateCommand())
 	rootCmd.AddCommand(newInitCommand())
+	rootCmd.AddCommand(newCheckUpdateCommand())
 	rootCmd.AddCommand(newListCommand())
 	rootCmd.AddCommand(newVersionCommand(version))
 	return rootCmd
 }
 
-func newSyncCommand(scope string, short string) *cobra.Command {
+func newGenerateCommand() *cobra.Command {
+	command := newGenerateScopeCommand("global", "generate [tool...]", "Generate global completions.")
+	command.AddCommand(newGenerateScopeCommand("global", "global [tool...]", "Generate global completions."))
+	command.AddCommand(newGenerateScopeCommand("project", "project [tool...]", "Generate project-local completions."))
+	return command
+}
+
+func newGenerateScopeCommand(scope string, use string, short string) *cobra.Command {
 	var outputDir string
 	var jobs int
 
 	command := &cobra.Command{
-		Use:   scope + " [tool...]",
+		Use:   use,
 		Short: short,
 		Args:  cobra.ArbitraryArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -59,30 +66,66 @@ func newSyncCommand(scope string, short string) *cobra.Command {
 }
 
 func newInitCommand() *cobra.Command {
-	var project bool
-	var globalSync bool
-	var noSync bool
-	var noCompinit bool
-
 	command := &cobra.Command{
 		Use:   "init",
 		Short: "Print a zsh initialization snippet.",
 		Args:  cobra.NoArgs,
+	}
+	command.AddCommand(newInitGlobalCommand())
+	command.AddCommand(newInitProjectCommand())
+	return command
+}
+
+func newInitGlobalCommand() *cobra.Command {
+	var noCompinit bool
+
+	command := &cobra.Command{
+		Use:   "global",
+		Short: "Print a global zsh initialization snippet.",
+		Args:  cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			options := InitOptions{
-				Project:    project,
-				GlobalSync: globalSync,
-				Sync:       !noSync,
-				Compinit:   !noCompinit,
+				Sync:     true,
+				Compinit: !noCompinit,
 			}
 			return writeInitScript(options, cmd.OutOrStdout())
 		},
 	}
-	command.Flags().BoolVar(&project, "project", false, "Include project-local completions and run zcs project before updating fpath.")
-	command.Flags().BoolVar(&globalSync, "global-sync", false, "Refresh stale global completions before updating fpath.")
-	command.Flags().BoolVar(&noSync, "no-sync", false, "Do not run zcs project in the generated snippet.")
 	command.Flags().BoolVar(&noCompinit, "no-compinit", false, "Do not include autoload -Uz compinit and compinit in the generated snippet.")
 	return command
+}
+
+func newInitProjectCommand() *cobra.Command {
+	var noSync bool
+	var noCompinit bool
+
+	command := &cobra.Command{
+		Use:   "project",
+		Short: "Print a project-local zsh initialization snippet.",
+		Args:  cobra.NoArgs,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			options := InitOptions{
+				Project:  true,
+				Sync:     !noSync,
+				Compinit: !noCompinit,
+			}
+			return writeInitScript(options, cmd.OutOrStdout())
+		},
+	}
+	command.Flags().BoolVar(&noSync, "no-sync", false, "Do not run zcs generate project in the generated snippet.")
+	command.Flags().BoolVar(&noCompinit, "no-compinit", false, "Do not include autoload -Uz compinit and compinit in the generated snippet.")
+	return command
+}
+
+func newCheckUpdateCommand() *cobra.Command {
+	return &cobra.Command{
+		Use:   "check-update",
+		Short: "Print a zsh snippet that refreshes stale global completions.",
+		Args:  cobra.NoArgs,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return writeCheckUpdateScript(cmd.OutOrStdout())
+		},
+	}
 }
 
 func newListCommand() *cobra.Command {

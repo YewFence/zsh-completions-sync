@@ -32,6 +32,14 @@ func writeInitScript(options InitOptions, stdout io.Writer) error {
 		snippets = append(snippets, "init-snippets/compinit.zsh")
 	}
 
+	return writeInitSnippets(snippets, stdout)
+}
+
+func writeCheckUpdateScript(stdout io.Writer) error {
+	return writeInitSnippets([]string{"init-snippets/global-sync.zsh"}, stdout)
+}
+
+func writeInitSnippets(snippets []string, stdout io.Writer) error {
 	for index, snippet := range snippets {
 		if index > 0 {
 			if _, err := io.WriteString(stdout, "\n"); err != nil {

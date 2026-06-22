@@ -12,7 +12,7 @@ for _zcs_global_completion in "$_zcs_global_completion_dir"/_*(N); do
 done
 
 if (( _zcs_global_sync )); then
-  ZCS_OUTPUT_DIR="$_zcs_global_completion_dir" zcs global >/dev/null 2>&1
+  ZCS_OUTPUT_DIR="$_zcs_global_completion_dir" zcs generate >/dev/null 2>&1
 fi
 
 unset _zcs_global_completion_dir _zcs_global_sync _zcs_global_completion _zcs_global_tool _zcs_global_executable

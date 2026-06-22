@@ -38,9 +38,9 @@ export PATH="$GOBIN:$PATH"
 1. 生成补全脚本
 
 ```bash
-zcs list --global
+zcs list --scope global
 # 查看支持的工具
-zcs global
+zcs generate
 # 生成全局生效的补全脚本
 ```
 
@@ -49,7 +49,7 @@ zcs global
 2. 配置 zsh 以加载补全脚本
 
 ```bash
-echo 'eval "$(zcs init)"' >> ~/.zshrc
+echo 'eval "$(zcs init global)"' >> ~/.zshrc
 source ~/.zshrc
 ```
 
@@ -58,7 +58,7 @@ Done! 享受愉快的自动补全吧~
 3. 可选的：配置自动更新
 
 ```zsh
-echo 'eval "$(zcs init --global-sync)"' >> ~/.zshrc
+echo 'eval "$(zcs check-update)"' >> ~/.zshrc
 ```
 
 ## 文档
