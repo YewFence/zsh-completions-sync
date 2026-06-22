@@ -19,5 +19,5 @@ features:
   - title: 项目补全
     details: 运行 zcs project，把项目内工具补全写入 .completions/zsh。
   - title: 并发同步
-    details: 多个工具并发生成，失败项只输出告警，不覆盖已有补全。
+    details: 多个工具并发生成，可以用 --jobs 控制并发数，失败项只输出告警。
 ---

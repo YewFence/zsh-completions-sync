@@ -15,13 +15,17 @@ func NewRootCommand(version string) *cobra.Command {
 	}
 	rootCmd.AddCommand(newSyncCommand("project", "Generate project-local completions."))
 	rootCmd.AddCommand(newSyncCommand("global", "Generate global completions."))
+	rootCmd.AddCommand(newInitCommand())
 	rootCmd.AddCommand(newListCommand())
 	rootCmd.AddCommand(newVersionCommand(version))
 	return rootCmd
 }
 
 func newSyncCommand(scope string, short string) *cobra.Command {
-	return &cobra.Command{
+	var outputDir string
+	var jobs int
+
+	command := &cobra.Command{
 		Use:   scope,
 		Short: short,
 		Args:  cobra.NoArgs,
@@ -36,15 +40,42 @@ func newSyncCommand(scope string, short string) *cobra.Command {
 				return err
 			}
 
-			outputDir, err := defaultOutputDir(scope)
+			resolvedOutputDir, err := resolveOutputDir(loadedRegistry.Registry, scope, outputDir)
 			if err != nil {
 				return err
 			}
 
 			tools := parseScopeTools(loadedRegistry.Registry, scope, cmd.ErrOrStderr())
-			return syncTools(tools, outputDir, cmd.ErrOrStderr())
+			return syncTools(tools, resolvedOutputDir, jobs, cmd.ErrOrStderr())
 		},
 	}
+	command.Flags().StringVarP(&outputDir, "output", "o", "", "Output directory for generated completion scripts.")
+	command.Flags().IntVarP(&jobs, "jobs", "j", 8, "Maximum number of tools to synchronize concurrently.")
+	return command
+}
+
+func newInitCommand() *cobra.Command {
+	var project bool
+	var noSync bool
+	var noCompinit bool
+
+	command := &cobra.Command{
+		Use:   "init",
+		Short: "Print a zsh initialization snippet.",
+		Args:  cobra.NoArgs,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			options := InitOptions{
+				Project:  project,
+				Sync:     !noSync,
+				Compinit: !noCompinit,
+			}
+			return writeInitScript(options, cmd.OutOrStdout())
+		},
+	}
+	command.Flags().BoolVar(&project, "project", false, "Include project-local completions and run zcs project before updating fpath.")
+	command.Flags().BoolVar(&noSync, "no-sync", false, "Do not run zcs project in the generated snippet.")
+	command.Flags().BoolVar(&noCompinit, "no-compinit", false, "Do not include autoload -Uz compinit and compinit in the generated snippet.")
+	return command
 }
 
 func newListCommand() *cobra.Command {

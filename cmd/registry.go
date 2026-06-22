@@ -11,6 +11,8 @@ import (
 )
 
 const (
+	zcsOutputDirEnv = "ZCS_OUTPUT_DIR"
+
 	projectConfig     = ".zsh-completions-sync.toml"
 	projectConfigDir  = ".config"
 	projectConfigFile = "zsh-completions-sync.toml"
@@ -31,6 +33,28 @@ type RegistryLayer struct {
 type LoadedRegistry struct {
 	Registry map[string]any
 	Layers   []RegistryLayer
+}
+
+func resolveOutputDir(registry map[string]any, scope string, flagOutputDir string) (string, error) {
+	if flagOutputDir != "" {
+		return expandUser(os.ExpandEnv(flagOutputDir)), nil
+	}
+	if outputDir := os.Getenv(zcsOutputDirEnv); outputDir != "" {
+		return expandUser(os.ExpandEnv(outputDir)), nil
+	}
+	if settingsOutputDir, ok := settingsOutputDir(registry); ok {
+		return expandUser(os.ExpandEnv(settingsOutputDir)), nil
+	}
+	return defaultOutputDir(scope)
+}
+
+func settingsOutputDir(registry map[string]any) (string, bool) {
+	settings, ok := registry["settings"].(map[string]any)
+	if !ok {
+		return "", false
+	}
+	outputDir, ok := settings["output_dir"].(string)
+	return outputDir, ok && outputDir != ""
 }
 
 func defaultOutputDir(scope string) (string, error) {

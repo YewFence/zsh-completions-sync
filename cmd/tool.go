@@ -33,6 +33,7 @@ type CommandCheck struct {
 
 type ListedTool struct {
 	Name          string
+	Status        string
 	Scopes        string
 	PreCommand    string
 	Source        string
@@ -49,6 +50,9 @@ func parseScopeTools(registry map[string]any, scope string, stderr io.Writer) []
 	for name, config := range toolTable {
 		toolConfig, ok := config.(map[string]any)
 		if !ok || name == "" {
+			continue
+		}
+		if toolDisabled(toolConfig) {
 			continue
 		}
 
@@ -88,6 +92,11 @@ func parseScopes(value any) (map[string]struct{}, bool) {
 		scopes[scope] = struct{}{}
 	}
 	return scopes, true
+}
+
+func toolDisabled(config map[string]any) bool {
+	disabled, ok := config["disabled"].(bool)
+	return ok && disabled
 }
 
 func parseTool(name string, config map[string]any, stderr io.Writer) (CompletionTool, bool) {
@@ -144,9 +153,9 @@ func listTools(loadedRegistry LoadedRegistry, scope string, stdout io.Writer, st
 
 	tableRows := make([][]string, 0, len(rows))
 	for _, row := range rows {
-		tableRows = append(tableRows, []string{row.Name, row.Scopes, row.PreCommand, row.Source, row.ConfigSources})
+		tableRows = append(tableRows, []string{row.Name, row.Status, row.Scopes, row.PreCommand, row.Source, row.ConfigSources})
 	}
-	return printTable([]string{"Tool", "Scopes", "Pre-command", "Source", "Config loaded from"}, tableRows, stdout)
+	return printTable([]string{"Tool", "Status", "Scopes", "Pre-command", "Source", "Config loaded from"}, tableRows, stdout)
 }
 
 func listedTools(loadedRegistry LoadedRegistry, scope string, stderr io.Writer) []ListedTool {
@@ -165,6 +174,17 @@ func listedTools(loadedRegistry LoadedRegistry, scope string, stderr io.Writer) 
 	for _, name := range names {
 		config, ok := toolTable[name].(map[string]any)
 		if !ok {
+			continue
+		}
+		if toolDisabled(config) {
+			rows = append(rows, ListedTool{
+				Name:          name,
+				Status:        "disabled",
+				Scopes:        "-",
+				PreCommand:    "-",
+				Source:        "-",
+				ConfigSources: strings.Join(toolConfigSources(loadedRegistry.Layers, name), " -> "),
+			})
 			continue
 		}
 
@@ -192,6 +212,7 @@ func listedTools(loadedRegistry LoadedRegistry, scope string, stderr io.Writer) 
 
 		rows = append(rows, ListedTool{
 			Name:          name,
+			Status:        "enabled",
 			Scopes:        formatScopes(scopes),
 			PreCommand:    formatOptionalCommand(preCommand),
 			Source:        formatSource(source),
@@ -294,22 +315,33 @@ func formatTableRow(row []string, widths []int) string {
 	return strings.TrimRight(strings.Join(paddedCells, "  "), " ")
 }
 
-func syncTools(tools []CompletionTool, outputDir string, stderr io.Writer) error {
+func syncTools(tools []CompletionTool, outputDir string, jobs int, stderr io.Writer) error {
 	if err := os.MkdirAll(outputDir, 0o755); err != nil {
 		return err
 	}
+	if jobs <= 0 {
+		return fmt.Errorf("jobs must be greater than 0")
+	}
+	if jobs > len(tools) && len(tools) > 0 {
+		jobs = len(tools)
+	}
 
 	warnings := make([]string, len(tools))
+	work := make(chan int)
 	var waitGroup sync.WaitGroup
-	for index, tool := range tools {
-		index := index
-		tool := tool
+	for range jobs {
 		waitGroup.Add(1)
 		go func() {
 			defer waitGroup.Done()
-			warnings[index] = syncTool(tool, outputDir)
+			for index := range work {
+				warnings[index] = syncTool(tools[index], outputDir)
+			}
 		}()
 	}
+	for index := range tools {
+		work <- index
+	}
+	close(work)
 	waitGroup.Wait()
 
 	for _, warning := range warnings {
