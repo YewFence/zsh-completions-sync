@@ -235,6 +235,49 @@ file = "`+sourcePath+`"
 	assertFileContent(t, filepath.Join(tempDir, ".completions", "zsh", "_local-tool"), "#compdef local-tool\n")
 }
 
+func TestProjectCommandSupportsToolArgs(t *testing.T) {
+	tempDir := t.TempDir()
+	localSourcePath := writeNamedTestCompletionSource(t, tempDir, "local-tool")
+	otherSourcePath := writeNamedTestCompletionSource(t, tempDir, "other-tool")
+	writeProjectConfig(t, tempDir, `[tools.local-tool]
+scopes = ["project"]
+check = false
+file = "`+localSourcePath+`"
+
+[tools.other-tool]
+scopes = ["project"]
+check = false
+file = "`+otherSourcePath+`"
+`)
+	restoreWorkingDir := chdir(t, tempDir)
+	defer restoreWorkingDir()
+
+	buffer := new(bytes.Buffer)
+	command := newTestRootCommand(buffer, "project", "local-tool")
+	if err := command.Execute(); err != nil {
+		t.Fatalf("execute project command: %v", err)
+	}
+
+	outputDir := filepath.Join(tempDir, ".completions", "zsh")
+	assertFileContent(t, filepath.Join(outputDir, "_local-tool"), "#compdef local-tool\n")
+	if _, err := os.Stat(filepath.Join(outputDir, "_other-tool")); !os.IsNotExist(err) {
+		t.Fatalf("expected unrequested tool to be skipped, stat error: %v", err)
+	}
+}
+
+func TestProjectCommandRejectsUnknownToolArg(t *testing.T) {
+	tempDir := t.TempDir()
+	writeProjectConfig(t, tempDir, "")
+	restoreWorkingDir := chdir(t, tempDir)
+	defer restoreWorkingDir()
+
+	buffer := new(bytes.Buffer)
+	command := newTestRootCommand(buffer, "project", "missing-tool")
+	if err := command.Execute(); err == nil {
+		t.Fatal("expected unknown tool error")
+	}
+}
+
 func TestProjectCommandRejectsInvalidJobs(t *testing.T) {
 	tempDir := t.TempDir()
 	writeProjectConfig(t, tempDir, "")
@@ -303,10 +346,13 @@ func TestInitCommandDefaultsToGlobalOnly(t *testing.T) {
 	if strings.Contains(output, "zcs project") {
 		t.Fatalf("default init should not run zcs project: %q", output)
 	}
+	if strings.Contains(output, "zcs global") {
+		t.Fatalf("default init should not run zcs global: %q", output)
+	}
 	if strings.Contains(output, "$PWD/.completions/zsh") {
 		t.Fatalf("default init should not include project directory: %q", output)
 	}
-	if !strings.Contains(output, "$HOME/.zsh/completions") || !strings.Contains(output, "compinit") {
+	if !strings.Contains(output, "ZCS_GLOBAL_OUTPUT_DIR") || !strings.Contains(output, "$HOME/.zsh/completions") || !strings.Contains(output, "compinit") {
 		t.Fatalf("unexpected output: %q", output)
 	}
 }
@@ -327,15 +373,34 @@ func TestInitCommandSupportsProjectAndNoFlags(t *testing.T) {
 	}
 }
 
+func TestInitCommandSupportsGlobalSync(t *testing.T) {
+	buffer := new(bytes.Buffer)
+	command := newTestRootCommand(buffer, "init", "--global-sync")
+	if err := command.Execute(); err != nil {
+		t.Fatalf("execute init command: %v", err)
+	}
+
+	output := buffer.String()
+	if !strings.Contains(output, "${commands[$_zcs_global_tool]}") || !strings.Contains(output, "ZCS_OUTPUT_DIR=\"$_zcs_global_completion_dir\" zcs global") {
+		t.Fatalf("global sync snippet missing: %q", output)
+	}
+}
+
 func writeTestCompletionSource(t *testing.T, tempDir string) string {
+	t.Helper()
+
+	return writeNamedTestCompletionSource(t, tempDir, "local-tool")
+}
+
+func writeNamedTestCompletionSource(t *testing.T, tempDir string, name string) string {
 	t.Helper()
 
 	sourceDir := filepath.Join(tempDir, "source")
 	if err := os.MkdirAll(sourceDir, 0o755); err != nil {
 		t.Fatalf("create source dir: %v", err)
 	}
-	sourcePath := filepath.Join(sourceDir, "_local-tool")
-	if err := os.WriteFile(sourcePath, []byte("#compdef local-tool\n"), 0o644); err != nil {
+	sourcePath := filepath.Join(sourceDir, "_"+name)
+	if err := os.WriteFile(sourcePath, []byte("#compdef "+name+"\n"), 0o644); err != nil {
 		t.Fatalf("write source completion: %v", err)
 	}
 	return sourcePath

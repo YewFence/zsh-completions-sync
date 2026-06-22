@@ -143,7 +143,7 @@ func formatConfigLabel(label string, path string) string {
 }
 
 func warnDuplicateConfig(preferredPath string, ignoredPath string, stderr io.Writer) {
-	fmt.Fprintf(
+	_, _ = fmt.Fprintf(
 		stderr,
 		"warn: duplicate zsh-completions-sync registry config; using %s and ignoring %s\n",
 		preferredPath,

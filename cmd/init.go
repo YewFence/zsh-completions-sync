@@ -9,13 +9,17 @@ import (
 var initSnippetFS embed.FS
 
 type InitOptions struct {
-	Project  bool
-	Sync     bool
-	Compinit bool
+	Project    bool
+	GlobalSync bool
+	Sync       bool
+	Compinit   bool
 }
 
 func writeInitScript(options InitOptions, stdout io.Writer) error {
 	snippets := []string{}
+	if options.GlobalSync {
+		snippets = append(snippets, "init-snippets/global-sync.zsh")
+	}
 	if options.Project && options.Sync {
 		snippets = append(snippets, "init-snippets/project-sync.zsh")
 	}

@@ -268,7 +268,9 @@ func readHTTPFile(source HTTPFileSource) SourceReadResult {
 	if err != nil {
 		return SourceReadResult{Error: fmt.Sprintf("failed to read HTTP file %s: %v", source.URL, err)}
 	}
-	defer response.Body.Close()
+	defer func() {
+		_ = response.Body.Close()
+	}()
 
 	if response.StatusCode < 200 || response.StatusCode >= 300 {
 		return SourceReadResult{Error: fmt.Sprintf("failed to read HTTP file %s: HTTP status %s", source.URL, response.Status)}
@@ -290,7 +292,9 @@ func readGitFile(source GitFileSource) SourceReadResult {
 	if err != nil {
 		return SourceReadResult{Error: fmt.Sprintf("failed to create temp dir: %v", err)}
 	}
-	defer os.RemoveAll(tempDir)
+	defer func() {
+		_ = os.RemoveAll(tempDir)
+	}()
 
 	repositoryDir := filepath.Join(tempDir, "repository")
 	if cloneError := cloneGitRepository(source.Repository, repositoryDir); cloneError != "" {

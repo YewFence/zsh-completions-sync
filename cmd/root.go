@@ -26,9 +26,9 @@ func newSyncCommand(scope string, short string) *cobra.Command {
 	var jobs int
 
 	command := &cobra.Command{
-		Use:   scope,
+		Use:   scope + " [tool...]",
 		Short: short,
-		Args:  cobra.NoArgs,
+		Args:  cobra.ArbitraryArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			projectDir, err := os.Getwd()
 			if err != nil {
@@ -46,6 +46,10 @@ func newSyncCommand(scope string, short string) *cobra.Command {
 			}
 
 			tools := parseScopeTools(loadedRegistry.Registry, scope, cmd.ErrOrStderr())
+			tools, err = filterTools(tools, args)
+			if err != nil {
+				return err
+			}
 			return syncTools(tools, resolvedOutputDir, jobs, cmd.ErrOrStderr())
 		},
 	}
@@ -56,6 +60,7 @@ func newSyncCommand(scope string, short string) *cobra.Command {
 
 func newInitCommand() *cobra.Command {
 	var project bool
+	var globalSync bool
 	var noSync bool
 	var noCompinit bool
 
@@ -65,14 +70,16 @@ func newInitCommand() *cobra.Command {
 		Args:  cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			options := InitOptions{
-				Project:  project,
-				Sync:     !noSync,
-				Compinit: !noCompinit,
+				Project:    project,
+				GlobalSync: globalSync,
+				Sync:       !noSync,
+				Compinit:   !noCompinit,
 			}
 			return writeInitScript(options, cmd.OutOrStdout())
 		},
 	}
 	command.Flags().BoolVar(&project, "project", false, "Include project-local completions and run zcs project before updating fpath.")
+	command.Flags().BoolVar(&globalSync, "global-sync", false, "Refresh stale global completions before updating fpath.")
 	command.Flags().BoolVar(&noSync, "no-sync", false, "Do not run zcs project in the generated snippet.")
 	command.Flags().BoolVar(&noCompinit, "no-compinit", false, "Do not include autoload -Uz compinit and compinit in the generated snippet.")
 	return command

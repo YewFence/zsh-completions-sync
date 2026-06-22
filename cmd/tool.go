@@ -74,6 +74,36 @@ func parseScopeTools(registry map[string]any, scope string, stderr io.Writer) []
 	return tools
 }
 
+func filterTools(tools []CompletionTool, names []string) ([]CompletionTool, error) {
+	if len(names) == 0 {
+		return tools, nil
+	}
+
+	requested := map[string]struct{}{}
+	for _, name := range names {
+		requested[name] = struct{}{}
+	}
+
+	filtered := []CompletionTool{}
+	for _, tool := range tools {
+		if _, ok := requested[tool.Name]; !ok {
+			continue
+		}
+		filtered = append(filtered, tool)
+		delete(requested, tool.Name)
+	}
+	if len(requested) == 0 {
+		return filtered, nil
+	}
+
+	missing := make([]string, 0, len(requested))
+	for name := range requested {
+		missing = append(missing, name)
+	}
+	sort.Strings(missing)
+	return nil, fmt.Errorf("unknown tool for selected scope: %s", strings.Join(missing, ", "))
+}
+
 func parseScopes(value any) (map[string]struct{}, bool) {
 	values, ok := value.([]any)
 	if !ok || len(values) == 0 {
@@ -426,7 +456,7 @@ func formatToolWarning(name string, message string) string {
 }
 
 func warnToolMessage(message string, stderr io.Writer) {
-	fmt.Fprintln(stderr, message)
+	_, _ = fmt.Fprintln(stderr, message)
 }
 
 func writeAtomic(destination string, content []byte) error {
@@ -435,7 +465,9 @@ func writeAtomic(destination string, content []byte) error {
 		return err
 	}
 	tempPath := tempFile.Name()
-	defer os.Remove(tempPath)
+	defer func() {
+		_ = os.Remove(tempPath)
+	}()
 
 	if _, err := tempFile.Write(content); err != nil {
 		_ = tempFile.Close()

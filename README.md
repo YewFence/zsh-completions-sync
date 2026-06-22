@@ -25,6 +25,13 @@ go run . list
 zcs global
 ```
 
+也可以只同步指定工具。
+
+```sh
+zcs global cargo
+zcs project pnpm uv
+```
+
 项目补全会生成到当前项目的 `.completions/zsh`。
 
 ```sh
@@ -60,6 +67,23 @@ ZCS_OUTPUT_DIR=.completions/custom zcs project
 ```zsh
 zcs init
 ```
+
+如果希望 zsh 启动时自动刷新已经生成过的全局补全，可以使用 `--global-sync`。这段脚本会遍历全局补全目录里的 `_tool` 文件，用文件名反推出工具名，再比较对应可执行文件和补全文件的修改时间；只要有一个可执行文件更新于已有补全文件，就会静默运行一次 `zcs global`。它不会读取注册表，也不会发现从未生成过补全的新工具，新工具仍然需要手动运行 `zcs global` 或 `zcs global tool`。
+
+```zsh
+zcs init --global-sync
+```
+
+这个设计优先保证平时的 shell 启动速度，而不是追求更新判断的绝对准确性，所以它是一个差不多够用但比较脆弱的启发式检查。刷新判断刻意写成 zsh 脚本，而不是每次启动都进入 Go 程序加载注册表，也不会做版本检测或依赖追踪；如果你需要更可靠的更新，仍然推荐自己定时手动运行 `zcs global`。
+
+如果你用自定义全局输出目录，需要在 `.zshrc` 里同步设置同一个目录，否则纯 zsh 加载和刷新片段看不到配置文件里的 `[settings] output_dir`。建议使用只影响全局初始化片段的 `ZCS_GLOBAL_OUTPUT_DIR`，也可以继续使用 `ZCS_OUTPUT_DIR`。
+
+```zsh
+export ZCS_GLOBAL_OUTPUT_DIR=$HOME/.local/share/zsh/completions
+eval "$(zcs init --global-sync)"
+```
+
+使用 `mise`、`asdf`、`Volta`、`Nix` 这类命令管理器时要注意初始化顺序。自动刷新片段依赖 zsh 的 `${commands[tool]}` 找到当前可执行文件，如果它在 `mise activate` 之前运行，看到的可能是长期不变的 shim 修改时间，底层工具升级后也不会触发刷新，所以应先激活命令管理器，再运行 `zcs init --global-sync` 输出的片段。
 
 如果希望同时加载项目级补全，可以使用 `--project`。这个模式会在脚本片段前面调用 `zcs project`，因为项目补全需要先生成再加入 `fpath`。
 
