@@ -15,6 +15,11 @@ pnpm = "11"
 # https://golangci-lint.run/
 golangci-lint = "2"
 
+[env]
+
+[env._]
+path = ["./bin", "${GOBIN:-}"]
+
 [tasks.tidy]
 description = "Tidy Go module dependencies"
 run = "go mod tidy"
