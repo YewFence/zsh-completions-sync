@@ -8,7 +8,9 @@ export default defineConfig({
 
   themeConfig: {
     nav: [
-      { text: 'Shell 补全', link: '/guide/completion' },
+      { text: '快速开始', link: '/guide/getting-started' },
+      { text: '配置文件', link: '/guide/config-file' },
+      { text: '命令参考', link: '/reference/zcs' },
       { text: 'GitHub', link: 'https://github.com/YewFence/zsh-completions-sync' }
     ],
 
@@ -16,7 +18,30 @@ export default defineConfig({
       {
         text: '指南',
         items: [
-          { text: 'Shell 补全', link: '/guide/completion' }
+          { text: '快速开始', link: '/guide/getting-started' },
+          { text: '核心概念', link: '/guide/concepts' },
+          { text: '配置文件', link: '/guide/config-file' },
+          { text: '高级用法', link: '/guide/advanced-usage' },
+          { text: 'zcs 命令补全', link: '/guide/zcs-completion' }
+        ]
+      },
+      {
+        text: '参考',
+        items: [
+          { text: 'zcs', link: '/reference/zcs' },
+          { text: 'check-update', link: '/reference/zcs_check-update' },
+          { text: 'generate', link: '/reference/zcs_generate' },
+          { text: 'init', link: '/reference/zcs_init' },
+          { text: 'init global', link: '/reference/zcs_init_global' },
+          { text: 'init project', link: '/reference/zcs_init_project' },
+          { text: 'list', link: '/reference/zcs_list' },
+          { text: 'version', link: '/reference/zcs_version' }
+        ]
+      },
+      {
+        text: '开发',
+        items: [
+          { text: '贡献指南', link: '/guide/contributing' }
         ]
       }
     ],
