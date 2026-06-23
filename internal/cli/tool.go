@@ -42,6 +42,19 @@ type ListedTool struct {
 	ConfigSources []string `json:"config_sources"`
 }
 
+type SyncResult struct {
+	OutputDir           string
+	GeneratedTools      []string
+	SkippedTools        []string
+	WarningSkippedTools []string
+}
+
+type syncToolResult struct {
+	Generated          bool
+	SkippedUnavailable bool
+	Warning            string
+}
+
 func parseScopeTools(registry map[string]any, scope string, stderr io.Writer) []CompletionTool {
 	toolTable, ok := registry["tools"].(map[string]any)
 	if !ok {
@@ -403,18 +416,18 @@ func formatTableRow(row []string, widths []int) string {
 	return strings.TrimRight(strings.Join(paddedCells, "  "), " ")
 }
 
-func syncTools(tools []CompletionTool, outputDir string, jobs int, stderr io.Writer) error {
+func syncTools(tools []CompletionTool, outputDir string, jobs int, stderr io.Writer) (SyncResult, error) {
 	if err := os.MkdirAll(outputDir, 0o755); err != nil {
-		return err
+		return SyncResult{}, err
 	}
 	if jobs <= 0 {
-		return fmt.Errorf("jobs must be greater than 0")
+		return SyncResult{}, fmt.Errorf("jobs must be greater than 0")
 	}
 	if jobs > len(tools) && len(tools) > 0 {
 		jobs = len(tools)
 	}
 
-	warnings := make([]string, len(tools))
+	results := make([]syncToolResult, len(tools))
 	work := make(chan int)
 	var waitGroup sync.WaitGroup
 	for range jobs {
@@ -422,7 +435,7 @@ func syncTools(tools []CompletionTool, outputDir string, jobs int, stderr io.Wri
 		go func() {
 			defer waitGroup.Done()
 			for index := range work {
-				warnings[index] = syncTool(tools[index], outputDir)
+				results[index] = syncTool(tools[index], outputDir)
 			}
 		}()
 	}
@@ -432,33 +445,77 @@ func syncTools(tools []CompletionTool, outputDir string, jobs int, stderr io.Wri
 	close(work)
 	waitGroup.Wait()
 
-	for _, warning := range warnings {
-		if warning != "" {
-			warnToolMessage(warning, stderr)
+	result := SyncResult{OutputDir: outputDir}
+	for index, toolResult := range results {
+		toolName := tools[index].Name
+		switch {
+		case toolResult.Generated:
+			result.GeneratedTools = append(result.GeneratedTools, toolName)
+		case toolResult.SkippedUnavailable:
+			result.SkippedTools = append(result.SkippedTools, toolName)
+		case toolResult.Warning != "":
+			result.WarningSkippedTools = append(result.WarningSkippedTools, toolName)
+			warnToolMessage(toolResult.Warning, stderr)
+		}
+	}
+	sort.Strings(result.GeneratedTools)
+	sort.Strings(result.SkippedTools)
+	sort.Strings(result.WarningSkippedTools)
+	return result, nil
+}
+
+func syncTool(tool CompletionTool, outputDir string) syncToolResult {
+	if !toolEnabled(tool.Check) {
+		return syncToolResult{SkippedUnavailable: true}
+	}
+
+	if preCommandError := runPreCommand(tool.PreCommand); preCommandError != "" {
+		return syncToolResult{Warning: formatToolWarning(tool.Name, preCommandError)}
+	}
+
+	result := readSource(tool.Source)
+	if result.Error != "" {
+		return syncToolResult{Warning: formatToolWarning(tool.Name, result.Error)}
+	}
+
+	destination := filepath.Join(outputDir, fmt.Sprintf("_%s", tool.Name))
+	if err := writeAtomic(destination, result.Content); err != nil {
+		return syncToolResult{Warning: formatToolWarning(tool.Name, fmt.Sprintf("failed to write %s: %v", destination, err))}
+	}
+	return syncToolResult{Generated: true}
+}
+
+func printSyncSummary(result SyncResult, stdout io.Writer) error {
+	generated := len(result.GeneratedTools)
+	skipped := len(result.SkippedTools) + len(result.WarningSkippedTools)
+
+	generatedTools := formatToolList(result.GeneratedTools)
+	if generatedTools != "" {
+		generatedTools = ": " + generatedTools
+	}
+	if _, err := fmt.Fprintf(stdout, "Generated %d %s in %s%s.\n", generated, pluralize("completion", generated), result.OutputDir, generatedTools); err != nil {
+		return err
+	}
+	if skipped > 0 {
+		skippedTools := append([]string(nil), result.SkippedTools...)
+		skippedTools = append(skippedTools, result.WarningSkippedTools...)
+		sort.Strings(skippedTools)
+		if _, err := fmt.Fprintf(stdout, "Skipped %d %s: %s.\n", skipped, pluralize("tool", skipped), formatToolList(skippedTools)); err != nil {
+			return err
 		}
 	}
 	return nil
 }
 
-func syncTool(tool CompletionTool, outputDir string) string {
-	if !toolEnabled(tool.Check) {
-		return ""
-	}
+func formatToolList(tools []string) string {
+	return strings.Join(tools, ", ")
+}
 
-	if preCommandError := runPreCommand(tool.PreCommand); preCommandError != "" {
-		return formatToolWarning(tool.Name, preCommandError)
+func pluralize(word string, count int) string {
+	if count == 1 {
+		return word
 	}
-
-	result := readSource(tool.Source)
-	if result.Error != "" {
-		return formatToolWarning(tool.Name, result.Error)
-	}
-
-	destination := filepath.Join(outputDir, fmt.Sprintf("_%s", tool.Name))
-	if err := writeAtomic(destination, result.Content); err != nil {
-		return formatToolWarning(tool.Name, fmt.Sprintf("failed to write %s: %v", destination, err))
-	}
-	return ""
+	return word + "s"
 }
 
 func runPreCommand(command []string) string {

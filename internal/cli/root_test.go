@@ -367,6 +367,97 @@ file = "`+otherSourcePath+`"
 	}
 }
 
+func TestGenerateCommandPrintsSyncSummary(t *testing.T) {
+	tempDir := t.TempDir()
+	localSourcePath := writeNamedTestCompletionSource(t, tempDir, "local-tool")
+	missingSourcePath := filepath.Join(tempDir, "missing", "_missing-tool")
+	writeProjectConfig(t, tempDir, `[tools.local-tool]
+scopes = ["project"]
+check = false
+file = "`+localSourcePath+`"
+
+[tools.missing-tool]
+scopes = ["project"]
+check = false
+file = "`+missingSourcePath+`"
+
+[tools.unavailable-tool]
+scopes = ["project"]
+check = "zcs-definitely-missing-tool"
+file = "`+localSourcePath+`"
+`)
+	restoreWorkingDir := chdir(t, tempDir)
+	defer restoreWorkingDir()
+
+	buffer := new(bytes.Buffer)
+	command := newTestRootCommand(buffer, "generate", "--scope", "project", "local-tool", "missing-tool", "unavailable-tool")
+	if err := command.Execute(); err != nil {
+		t.Fatalf("execute generate command: %v", err)
+	}
+
+	output := buffer.String()
+	for _, expected := range []string{
+		"Generated 1 completion in .completions/zsh: local-tool.",
+		"Skipped 2 tools: missing-tool, unavailable-tool.",
+		"warn: skip missing-tool:",
+	} {
+		if !strings.Contains(output, expected) {
+			t.Fatalf("expected %q in output: %q", expected, output)
+		}
+	}
+}
+
+func TestSilentFlagSuppressesCommandOutput(t *testing.T) {
+	tempDir := t.TempDir()
+	missingSourcePath := filepath.Join(tempDir, "missing", "_missing-tool")
+	writeProjectConfig(t, tempDir, `[tools.missing-tool]
+scopes = ["project"]
+check = false
+file = "`+missingSourcePath+`"
+`)
+	restoreWorkingDir := chdir(t, tempDir)
+	defer restoreWorkingDir()
+
+	buffer := new(bytes.Buffer)
+	command := newTestRootCommand(buffer, "--silent", "generate", "--scope", "project", "missing-tool")
+	if err := command.Execute(); err != nil {
+		t.Fatalf("execute generate command: %v", err)
+	}
+
+	if got := buffer.String(); got != "" {
+		t.Fatalf("expected silent output, got: %q", got)
+	}
+}
+
+func TestSilentFlagSuppressesExistingStdoutCommands(t *testing.T) {
+	buffer := new(bytes.Buffer)
+	command := newTestRootCommand(buffer, "version", "--silent")
+	if err := command.Execute(); err != nil {
+		t.Fatalf("execute version command: %v", err)
+	}
+
+	if got := buffer.String(); got != "" {
+		t.Fatalf("expected silent output, got: %q", got)
+	}
+}
+
+func TestSilentFlagSuppressesValidationOutput(t *testing.T) {
+	tempDir := t.TempDir()
+	writeProjectConfig(t, tempDir, "")
+	restoreWorkingDir := chdir(t, tempDir)
+	defer restoreWorkingDir()
+
+	buffer := new(bytes.Buffer)
+	command := newTestRootCommand(buffer, "--silent", "generate", "--scope", "workspace")
+	if err := command.Execute(); err == nil {
+		t.Fatal("expected invalid scope error")
+	}
+
+	if got := buffer.String(); got != "" {
+		t.Fatalf("expected silent output, got: %q", got)
+	}
+}
+
 func TestGenerateCommandProjectScopeRejectsUnknownToolArg(t *testing.T) {
 	tempDir := t.TempDir()
 	writeProjectConfig(t, tempDir, "")

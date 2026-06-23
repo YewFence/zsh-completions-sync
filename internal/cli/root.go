@@ -2,17 +2,29 @@ package cli
 
 import (
 	"fmt"
+	"io"
 	"os"
+	"strconv"
+	"strings"
 
 	"github.com/spf13/cobra"
 )
 
 func NewRootCommand(version string) *cobra.Command {
+	var silent bool
+
 	rootCmd := &cobra.Command{
 		Use:   "zcs",
 		Short: "Synchronize zsh completion scripts",
 		Long:  "Synchronize zsh completion scripts into global and project-local completion directories.",
+		PersistentPreRun: func(cmd *cobra.Command, args []string) {
+			if silent {
+				silenceCommandOutput(cmd.Root())
+			}
+		},
 	}
+	rootCmd.PersistentFlags().Var(&silentFlag{enabled: &silent, command: rootCmd}, "silent", "Suppress all command output.")
+	rootCmd.PersistentFlags().Lookup("silent").NoOptDefVal = "true"
 	rootCmd.AddCommand(newGenerateCommand())
 	rootCmd.AddCommand(newInitCommand())
 	rootCmd.AddCommand(newCheckUpdateCommand())
@@ -62,7 +74,11 @@ func newGenerateCommand() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			return syncTools(tools, resolvedOutputDir, jobs, cmd.ErrOrStderr())
+			result, err := syncTools(tools, resolvedOutputDir, jobs, cmd.ErrOrStderr())
+			if err != nil {
+				return err
+			}
+			return printSyncSummary(result, cmd.OutOrStdout())
 		},
 	}
 	command.Flags().StringVarP(&scope, "scope", "s", "global", "Generate completions for the selected scope.")
@@ -187,8 +203,69 @@ func newListCommand() *cobra.Command {
 
 func Execute(version string) {
 	rootCmd := NewRootCommand(version)
+	silent := argsContainSilent(os.Args[1:])
+	if silent {
+		silenceCommandOutput(rootCmd)
+	}
 	if err := rootCmd.Execute(); err != nil {
-		fmt.Fprintln(os.Stderr, err)
+		if !silent {
+			fmt.Fprintln(os.Stderr, err)
+		}
 		os.Exit(1)
 	}
+}
+
+type silentFlag struct {
+	enabled *bool
+	command *cobra.Command
+}
+
+func (flag *silentFlag) Set(value string) error {
+	enabled, err := strconv.ParseBool(value)
+	if err != nil {
+		return err
+	}
+	*flag.enabled = enabled
+	if enabled {
+		silenceCommandOutput(flag.command)
+	}
+	return nil
+}
+
+func (flag *silentFlag) String() string {
+	if flag == nil || flag.enabled == nil {
+		return "false"
+	}
+	return strconv.FormatBool(*flag.enabled)
+}
+
+func (flag *silentFlag) Type() string {
+	return "bool"
+}
+
+func (flag *silentFlag) IsBoolFlag() bool {
+	return true
+}
+
+func silenceCommandOutput(command *cobra.Command) {
+	command.SetOut(io.Discard)
+	command.SetErr(io.Discard)
+	command.SilenceErrors = true
+	command.SilenceUsage = true
+	for _, child := range command.Commands() {
+		silenceCommandOutput(child)
+	}
+}
+
+func argsContainSilent(args []string) bool {
+	silent := false
+	for _, arg := range args {
+		if arg == "--silent" || arg == "--silent=true" {
+			silent = true
+		}
+		if strings.HasPrefix(arg, "--silent=") {
+			silent = arg == "--silent=true"
+		}
+	}
+	return silent
 }
