@@ -200,9 +200,13 @@ func parseGitFileString(value string) (any, bool) {
 }
 
 func readSource(source any) SourceReadResult {
+	return readSourceWithEnv(source, nil)
+}
+
+func readSourceWithEnv(source any, env map[string]string) SourceReadResult {
 	switch typed := source.(type) {
 	case CommandSource:
-		return readCommandSource(typed)
+		return readCommandSource(typed, env)
 	case FileSource:
 		return readFileSource(typed)
 	default:
@@ -210,12 +214,12 @@ func readSource(source any) SourceReadResult {
 	}
 }
 
-func readCommandSource(source CommandSource) SourceReadResult {
+func readCommandSource(source CommandSource, env map[string]string) SourceReadResult {
 	if !commandExists(source.Command) {
 		return SourceReadResult{Error: fmt.Sprintf("command not found: %s", source.Command[0])}
 	}
 
-	result, err := runCommand(source.Command, nil)
+	result, err := runCommandWithEnv(source.Command, nil, env)
 	if err != nil {
 		return SourceReadResult{Error: fmt.Sprintf("failed to run command %s: %v", formatCommand(source.Command), err)}
 	}
@@ -365,10 +369,20 @@ type commandResult struct {
 }
 
 func runCommand(command []string, stdout io.Writer) (commandResult, error) {
+	return runCommandWithEnv(command, stdout, nil)
+}
+
+func runCommandWithEnv(command []string, stdout io.Writer, env map[string]string) (commandResult, error) {
 	var stdoutBuffer bytes.Buffer
 	var stderrBuffer bytes.Buffer
 
 	cmd := exec.Command(command[0], command[1:]...)
+	if len(env) > 0 {
+		cmd.Env = os.Environ()
+		for key, value := range env {
+			cmd.Env = append(cmd.Env, fmt.Sprintf("%s=%s", key, value))
+		}
+	}
 	if stdout == nil {
 		cmd.Stdout = &stdoutBuffer
 	} else {

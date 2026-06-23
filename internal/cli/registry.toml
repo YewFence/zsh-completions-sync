@@ -62,6 +62,11 @@ command = ["rustup", "completions", "zsh"]
 scopes = ["global"]
 command = ["bw", "completion", "--shell", "zsh"]
 
+[tools.jj]
+scopes = ["global", "project"]
+env = { COMPLETE = "zsh" }
+command = ["jj"]
+
 [tools.zcs]
 scopes = ["global"]
 command = ["zcs", "completion", "zsh"]

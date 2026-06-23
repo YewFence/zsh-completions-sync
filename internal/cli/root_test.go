@@ -367,6 +367,48 @@ file = "`+otherSourcePath+`"
 	}
 }
 
+func TestGenerateCommandPassesEnvToCommandSource(t *testing.T) {
+	tempDir := t.TempDir()
+	toolPath := writeEnvCompletionCommand(t, tempDir)
+	writeProjectConfig(t, tempDir, `[tools.local-tool]
+scopes = ["project"]
+check = false
+env = { ZCS_TEST_COMPLETION = "local-tool" }
+command = ["`+toolPath+`"]
+`)
+	restoreWorkingDir := chdir(t, tempDir)
+	defer restoreWorkingDir()
+
+	buffer := new(bytes.Buffer)
+	command := newTestRootCommand(buffer, "generate", "--scope", "project", "local-tool")
+	if err := command.Execute(); err != nil {
+		t.Fatalf("execute generate command: %v", err)
+	}
+
+	assertFileContent(t, filepath.Join(tempDir, ".completions", "zsh", "_local-tool"), "#compdef local-tool\n")
+}
+
+func TestGenerateCommandPassesEnvToCommandCheck(t *testing.T) {
+	tempDir := t.TempDir()
+	toolPath := writeEnvCompletionCommand(t, tempDir)
+	writeProjectConfig(t, tempDir, `[tools.local-tool]
+scopes = ["project"]
+check = ["`+toolPath+`", "check"]
+env = { ZCS_TEST_COMPLETION = "local-tool" }
+command = ["`+toolPath+`"]
+`)
+	restoreWorkingDir := chdir(t, tempDir)
+	defer restoreWorkingDir()
+
+	buffer := new(bytes.Buffer)
+	command := newTestRootCommand(buffer, "generate", "--scope", "project", "local-tool")
+	if err := command.Execute(); err != nil {
+		t.Fatalf("execute generate command: %v", err)
+	}
+
+	assertFileContent(t, filepath.Join(tempDir, ".completions", "zsh", "_local-tool"), "#compdef local-tool\n")
+}
+
 func TestGenerateCommandPrintsSyncSummary(t *testing.T) {
 	tempDir := t.TempDir()
 	localSourcePath := writeNamedTestCompletionSource(t, tempDir, "local-tool")
@@ -633,6 +675,25 @@ func writeNamedTestCompletionSource(t *testing.T, tempDir string, name string) s
 		t.Fatalf("write source completion: %v", err)
 	}
 	return sourcePath
+}
+
+func writeEnvCompletionCommand(t *testing.T, tempDir string) string {
+	t.Helper()
+
+	toolPath := filepath.Join(tempDir, "env-completion")
+	content := `#!/bin/sh
+if [ "$ZCS_TEST_COMPLETION" != "local-tool" ]; then
+  exit 1
+fi
+if [ "$1" = "check" ]; then
+  exit 0
+fi
+printf '#compdef %s\n' "$ZCS_TEST_COMPLETION"
+`
+	if err := os.WriteFile(toolPath, []byte(content), 0o755); err != nil {
+		t.Fatalf("write test command: %v", err)
+	}
+	return toolPath
 }
 
 func writeProjectConfig(t *testing.T, tempDir string, content string) {

@@ -22,6 +22,7 @@ type CompletionTool struct {
 	Source     any
 	Check      any
 	PreCommand []string
+	Env        map[string]string
 }
 
 type WhichCheck struct {
@@ -33,13 +34,14 @@ type CommandCheck struct {
 }
 
 type ListedTool struct {
-	Name          string   `json:"name"`
-	Status        string   `json:"status"`
-	Available     *bool    `json:"available"`
-	Scopes        []string `json:"scopes"`
-	PreCommand    []string `json:"pre_command,omitempty"`
-	Source        string   `json:"source"`
-	ConfigSources []string `json:"config_sources"`
+	Name          string            `json:"name"`
+	Status        string            `json:"status"`
+	Available     *bool             `json:"available"`
+	Scopes        []string          `json:"scopes"`
+	PreCommand    []string          `json:"pre_command,omitempty"`
+	Env           map[string]string `json:"env,omitempty"`
+	Source        string            `json:"source"`
+	ConfigSources []string          `json:"config_sources"`
 }
 
 type SyncResult struct {
@@ -180,7 +182,13 @@ func parseTool(name string, config map[string]any, stderr io.Writer) (Completion
 		return CompletionTool{}, false
 	}
 
-	return CompletionTool{Name: name, Source: source, Check: check, PreCommand: preCommand}, true
+	env, ok := parseEnv(config["env"])
+	if !ok {
+		warnTool(name, "invalid env config", stderr)
+		return CompletionTool{}, false
+	}
+
+	return CompletionTool{Name: name, Source: source, Check: check, PreCommand: preCommand, Env: env}, true
 }
 
 func parseCheck(value any, defaultExecutable string) (any, bool) {
@@ -206,6 +214,26 @@ func parsePreCommand(value any) ([]string, bool) {
 	return parseCommand(value)
 }
 
+func parseEnv(value any) (map[string]string, bool) {
+	if value == nil {
+		return nil, true
+	}
+
+	typed, ok := value.(map[string]any)
+	if !ok {
+		return nil, false
+	}
+	env := map[string]string{}
+	for key, rawValue := range typed {
+		value, ok := rawValue.(string)
+		if key == "" || strings.Contains(key, "=") || !ok {
+			return nil, false
+		}
+		env[key] = value
+	}
+	return env, true
+}
+
 func listTools(loadedRegistry LoadedRegistry, scope string, format string, stdout io.Writer, stderr io.Writer) error {
 	rows := listedTools(loadedRegistry, scope, stderr)
 	if format == "json" {
@@ -227,11 +255,12 @@ func listTools(loadedRegistry LoadedRegistry, scope string, format string, stdou
 			formatAvailability(row.Available),
 			formatScopes(row.Scopes),
 			formatOptionalCommand(row.PreCommand),
+			formatEnv(row.Env),
 			row.Source,
 			strings.Join(row.ConfigSources, " -> "),
 		})
 	}
-	return printTable([]string{"Tool", "Status", "Available", "Scopes", "Pre-command", "Source", "Config loaded from"}, tableRows, stdout)
+	return printTable([]string{"Tool", "Status", "Available", "Scopes", "Pre-command", "Env", "Source", "Config loaded from"}, tableRows, stdout)
 }
 
 func listedTools(loadedRegistry LoadedRegistry, scope string, stderr io.Writer) []ListedTool {
@@ -259,6 +288,7 @@ func listedTools(loadedRegistry LoadedRegistry, scope string, stderr io.Writer) 
 				Available:     nil,
 				Scopes:        nil,
 				PreCommand:    nil,
+				Env:           nil,
 				Source:        "-",
 				ConfigSources: toolConfigSources(loadedRegistry.Layers, name),
 			})
@@ -286,12 +316,17 @@ func listedTools(loadedRegistry LoadedRegistry, scope string, stderr io.Writer) 
 			warnTool(name, "invalid pre-command config", stderr)
 			continue
 		}
+		env, ok := parseEnv(config["env"])
+		if !ok {
+			warnTool(name, "invalid env config", stderr)
+			continue
+		}
 		check, ok := parseCheck(config["check"], name)
 		if !ok {
 			warnTool(name, "invalid check config", stderr)
 			continue
 		}
-		available := toolEnabled(check)
+		available := toolEnabled(check, env)
 
 		rows = append(rows, ListedTool{
 			Name:          name,
@@ -299,6 +334,7 @@ func listedTools(loadedRegistry LoadedRegistry, scope string, stderr io.Writer) 
 			Available:     &available,
 			Scopes:        sortedScopes(scopes),
 			PreCommand:    preCommand,
+			Env:           env,
 			Source:        formatSource(source),
 			ConfigSources: toolConfigSources(loadedRegistry.Layers, name),
 		})
@@ -375,6 +411,23 @@ func formatOptionalCommand(command []string) string {
 		return "-"
 	}
 	return formatCommand(command)
+}
+
+func formatEnv(env map[string]string) string {
+	if len(env) == 0 {
+		return "-"
+	}
+	keys := make([]string, 0, len(env))
+	for key := range env {
+		keys = append(keys, key)
+	}
+	sort.Strings(keys)
+
+	pairs := make([]string, 0, len(keys))
+	for _, key := range keys {
+		pairs = append(pairs, fmt.Sprintf("%s=%s", key, env[key]))
+	}
+	return strings.Join(pairs, " ")
 }
 
 func printTable(headers []string, rows [][]string, stdout io.Writer) error {
@@ -465,15 +518,15 @@ func syncTools(tools []CompletionTool, outputDir string, jobs int, stderr io.Wri
 }
 
 func syncTool(tool CompletionTool, outputDir string) syncToolResult {
-	if !toolEnabled(tool.Check) {
+	if !toolEnabled(tool.Check, tool.Env) {
 		return syncToolResult{SkippedUnavailable: true}
 	}
 
-	if preCommandError := runPreCommand(tool.PreCommand); preCommandError != "" {
+	if preCommandError := runPreCommand(tool.PreCommand, tool.Env); preCommandError != "" {
 		return syncToolResult{Warning: formatToolWarning(tool.Name, preCommandError)}
 	}
 
-	result := readSource(tool.Source)
+	result := readSourceWithEnv(tool.Source, tool.Env)
 	if result.Error != "" {
 		return syncToolResult{Warning: formatToolWarning(tool.Name, result.Error)}
 	}
@@ -518,7 +571,7 @@ func pluralize(word string, count int) string {
 	return word + "s"
 }
 
-func runPreCommand(command []string) string {
+func runPreCommand(command []string, env map[string]string) string {
 	if len(command) == 0 {
 		return ""
 	}
@@ -526,7 +579,7 @@ func runPreCommand(command []string) string {
 		return fmt.Sprintf("pre-command not found: %s", command[0])
 	}
 
-	result, err := runCommand(command, io.Discard)
+	result, err := runCommandWithEnv(command, io.Discard, env)
 	if err != nil {
 		return fmt.Sprintf("failed to run pre-command %s: %v", formatCommand(command), err)
 	}
@@ -542,7 +595,7 @@ func runPreCommand(command []string) string {
 	return message
 }
 
-func toolEnabled(check any) bool {
+func toolEnabled(check any, env map[string]string) bool {
 	if check == nil {
 		return true
 	}
@@ -555,7 +608,7 @@ func toolEnabled(check any) bool {
 		if _, err := exec.LookPath(typed.Command[0]); err != nil {
 			return false
 		}
-		result, err := runCommand(typed.Command, io.Discard)
+		result, err := runCommandWithEnv(typed.Command, io.Discard, env)
 		return err == nil && result.exitCode == 0
 	default:
 		return false
