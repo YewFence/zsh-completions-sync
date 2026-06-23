@@ -70,3 +70,7 @@ command = ["jj"]
 [tools.zcs]
 scopes = ["global"]
 command = ["zcs", "completion", "zsh"]
+
+[tools.rmux]
+scopes = ["global"]
+file = { git = "https://github.com/YewFence/zsh-completions-sync.git", path = "completions/_rmux", ref = "main" }

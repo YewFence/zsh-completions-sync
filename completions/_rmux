@@ -1,0 +1,13 @@
+#compdef rmux
+
+# Depends on the _tmux completion function, which is part of the zsh package.
+# Copyright (c) 2026 YewFence
+# Source: https://github.com/YewFence/zsh-completions-sync/tree/main/completions/_rmux
+
+_rmux() {
+  local -a commands
+  commands=(tmux=rmux)
+  _tmux "$@"
+}
+
+_rmux "$@"
