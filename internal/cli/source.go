@@ -199,10 +199,6 @@ func parseGitFileString(value string) (any, bool) {
 	return GitFileSource{Repository: repository, Path: unescapedPath, Ref: ref}, true
 }
 
-func readSource(source any) SourceReadResult {
-	return readSourceWithEnv(source, nil)
-}
-
 func readSourceWithEnv(source any, env map[string]string) SourceReadResult {
 	switch typed := source.(type) {
 	case CommandSource:
