@@ -17,6 +17,12 @@ zcs init global [flags]
       --no-compinit   Do not include autoload -Uz compinit and compinit in the generated snippet.
 ```
 
+### Options inherited from parent commands
+
+```
+      --silent   Suppress all command output.
+```
+
 ### SEE ALSO
 
 * [zcs init](zcs_init)	 - Print a zsh initialization snippet.

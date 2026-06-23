@@ -24,6 +24,15 @@ command = ["mise", "completion", "zsh"]
 
 `scopes` 支持 `global` 和 `project`。`command` 是生成补全脚本的命令，`zcs` 会读取它的标准输出作为补全内容。
 
+如果生成命令需要额外环境变量，可以用 `env` 声明。`env` 会传给 `command`、命令形式的 `check` 和 `pre-command`。
+
+```toml
+[tools.jj]
+scopes = ["global", "project"]
+env = { COMPLETE = "zsh" }
+command = ["jj"]
+```
+
 ## 禁用工具
 
 如果内置注册表里有你不想同步的工具，可以在用户配置或项目配置里禁用它。

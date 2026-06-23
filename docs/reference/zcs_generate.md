@@ -19,6 +19,12 @@ zcs generate [tool...] [flags]
   -s, --scope string    Generate completions for the selected scope. (default "global")
 ```
 
+### Options inherited from parent commands
+
+```
+      --silent   Suppress all command output.
+```
+
 ### SEE ALSO
 
 * [zcs](zcs)	 - Synchronize zsh completion scripts

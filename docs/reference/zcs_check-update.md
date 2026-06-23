@@ -16,6 +16,12 @@ zcs check-update [flags]
   -h, --help   help for check-update
 ```
 
+### Options inherited from parent commands
+
+```
+      --silent   Suppress all command output.
+```
+
 ### SEE ALSO
 
 * [zcs](zcs)	 - Synchronize zsh completion scripts

@@ -13,7 +13,8 @@ Synchronize zsh completion scripts into global and project-local completion dire
 ### Options
 
 ```
-  -h, --help   help for zcs
+  -h, --help     help for zcs
+      --silent   Suppress all command output.
 ```
 
 ### SEE ALSO

@@ -18,6 +18,12 @@ zcs init project [flags]
       --no-sync       Do not run zcs generate --scope project in the generated snippet.
 ```
 
+### Options inherited from parent commands
+
+```
+      --silent   Suppress all command output.
+```
+
 ### SEE ALSO
 
 * [zcs init](zcs_init)	 - Print a zsh initialization snippet.
