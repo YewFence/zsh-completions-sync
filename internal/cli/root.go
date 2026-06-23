@@ -30,6 +30,17 @@ func newGenerateCommand() *cobra.Command {
 		Use:   "generate [tool...]",
 		Short: "Generate completion scripts.",
 		Args:  cobra.ArbitraryArgs,
+		ValidArgsFunction: func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+			projectDir, err := os.Getwd()
+			if err != nil {
+				return nil, cobra.ShellCompDirectiveError
+			}
+			loadedRegistry, err := loadRegistry(projectDir, cmd.ErrOrStderr())
+			if err != nil {
+				return nil, cobra.ShellCompDirectiveError
+			}
+			return completeToolNames(parseScopeTools(loadedRegistry.Registry, scope, cmd.ErrOrStderr()), args), cobra.ShellCompDirectiveNoFileComp
+		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			projectDir, err := os.Getwd()
 			if err != nil {
@@ -134,6 +145,7 @@ func newCheckUpdateCommand() *cobra.Command {
 
 func newListCommand() *cobra.Command {
 	var scope string
+	var format string
 
 	command := &cobra.Command{
 		Use:   "list",
@@ -150,18 +162,25 @@ func newListCommand() *cobra.Command {
 				return err
 			}
 
-			return listTools(loadedRegistry, scope, cmd.OutOrStdout(), cmd.ErrOrStderr())
+			return listTools(loadedRegistry, scope, format, cmd.OutOrStdout(), cmd.ErrOrStderr())
 		},
 	}
 	command.Flags().StringVar(&scope, "scope", "", "Only show tools enabled for the selected scope.")
+	command.Flags().StringVar(&format, "format", "table", "Output format: table or json.")
 	_ = command.RegisterFlagCompletionFunc("scope", func(*cobra.Command, []string, string) ([]string, cobra.ShellCompDirective) {
 		return []string{"global", "project"}, cobra.ShellCompDirectiveNoFileComp
 	})
+	_ = command.RegisterFlagCompletionFunc("format", func(*cobra.Command, []string, string) ([]string, cobra.ShellCompDirective) {
+		return []string{"table", "json"}, cobra.ShellCompDirectiveNoFileComp
+	})
 	command.PreRunE = func(cmd *cobra.Command, args []string) error {
-		if scope == "" || scope == "global" || scope == "project" {
-			return nil
+		if scope != "" && scope != "global" && scope != "project" {
+			return fmt.Errorf("invalid scope %q, expected global or project", scope)
 		}
-		return fmt.Errorf("invalid scope %q, expected global or project", scope)
+		if format != "table" && format != "json" {
+			return fmt.Errorf("invalid format %q, expected table or json", format)
+		}
+		return nil
 	}
 	return command
 }

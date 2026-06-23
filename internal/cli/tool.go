@@ -1,6 +1,7 @@
 package cli
 
 import (
+	"encoding/json"
 	"fmt"
 	"io"
 	"os"
@@ -32,12 +33,13 @@ type CommandCheck struct {
 }
 
 type ListedTool struct {
-	Name          string
-	Status        string
-	Scopes        string
-	PreCommand    string
-	Source        string
-	ConfigSources string
+	Name          string   `json:"name"`
+	Status        string   `json:"status"`
+	Available     *bool    `json:"available"`
+	Scopes        []string `json:"scopes"`
+	PreCommand    []string `json:"pre_command,omitempty"`
+	Source        string   `json:"source"`
+	ConfigSources []string `json:"config_sources"`
 }
 
 func parseScopeTools(registry map[string]any, scope string, stderr io.Writer) []CompletionTool {
@@ -102,6 +104,23 @@ func filterTools(tools []CompletionTool, names []string) ([]CompletionTool, erro
 	}
 	sort.Strings(missing)
 	return nil, fmt.Errorf("unknown tool for selected scope: %s", strings.Join(missing, ", "))
+}
+
+func completeToolNames(tools []CompletionTool, args []string) []string {
+	seen := map[string]struct{}{}
+	for _, arg := range args {
+		seen[arg] = struct{}{}
+	}
+
+	names := make([]string, 0, len(tools))
+	for _, tool := range tools {
+		if _, ok := seen[tool.Name]; ok {
+			continue
+		}
+		names = append(names, tool.Name)
+	}
+	sort.Strings(names)
+	return names
 }
 
 func parseScopes(value any) (map[string]struct{}, bool) {
@@ -174,8 +193,14 @@ func parsePreCommand(value any) ([]string, bool) {
 	return parseCommand(value)
 }
 
-func listTools(loadedRegistry LoadedRegistry, scope string, stdout io.Writer, stderr io.Writer) error {
+func listTools(loadedRegistry LoadedRegistry, scope string, format string, stdout io.Writer, stderr io.Writer) error {
 	rows := listedTools(loadedRegistry, scope, stderr)
+	if format == "json" {
+		encoder := json.NewEncoder(stdout)
+		encoder.SetIndent("", "  ")
+		return encoder.Encode(rows)
+	}
+
 	if len(rows) == 0 {
 		_, err := fmt.Fprintln(stdout, "No configured tools.")
 		return err
@@ -183,9 +208,17 @@ func listTools(loadedRegistry LoadedRegistry, scope string, stdout io.Writer, st
 
 	tableRows := make([][]string, 0, len(rows))
 	for _, row := range rows {
-		tableRows = append(tableRows, []string{row.Name, row.Status, row.Scopes, row.PreCommand, row.Source, row.ConfigSources})
+		tableRows = append(tableRows, []string{
+			row.Name,
+			row.Status,
+			formatAvailability(row.Available),
+			formatScopes(row.Scopes),
+			formatOptionalCommand(row.PreCommand),
+			row.Source,
+			strings.Join(row.ConfigSources, " -> "),
+		})
 	}
-	return printTable([]string{"Tool", "Status", "Scopes", "Pre-command", "Source", "Config loaded from"}, tableRows, stdout)
+	return printTable([]string{"Tool", "Status", "Available", "Scopes", "Pre-command", "Source", "Config loaded from"}, tableRows, stdout)
 }
 
 func listedTools(loadedRegistry LoadedRegistry, scope string, stderr io.Writer) []ListedTool {
@@ -210,10 +243,11 @@ func listedTools(loadedRegistry LoadedRegistry, scope string, stderr io.Writer) 
 			rows = append(rows, ListedTool{
 				Name:          name,
 				Status:        "disabled",
-				Scopes:        "-",
-				PreCommand:    "-",
+				Available:     nil,
+				Scopes:        nil,
+				PreCommand:    nil,
 				Source:        "-",
-				ConfigSources: strings.Join(toolConfigSources(loadedRegistry.Layers, name), " -> "),
+				ConfigSources: toolConfigSources(loadedRegistry.Layers, name),
 			})
 			continue
 		}
@@ -239,14 +273,21 @@ func listedTools(loadedRegistry LoadedRegistry, scope string, stderr io.Writer) 
 			warnTool(name, "invalid pre-command config", stderr)
 			continue
 		}
+		check, ok := parseCheck(config["check"], name)
+		if !ok {
+			warnTool(name, "invalid check config", stderr)
+			continue
+		}
+		available := toolEnabled(check)
 
 		rows = append(rows, ListedTool{
 			Name:          name,
 			Status:        "enabled",
-			Scopes:        formatScopes(scopes),
-			PreCommand:    formatOptionalCommand(preCommand),
+			Available:     &available,
+			Scopes:        sortedScopes(scopes),
+			PreCommand:    preCommand,
 			Source:        formatSource(source),
-			ConfigSources: strings.Join(toolConfigSources(loadedRegistry.Layers, name), " -> "),
+			ConfigSources: toolConfigSources(loadedRegistry.Layers, name),
 		})
 	}
 
@@ -266,13 +307,30 @@ func toolConfigSources(layers []RegistryLayer, toolName string) []string {
 	return sources
 }
 
-func formatScopes(scopes map[string]struct{}) string {
+func sortedScopes(scopes map[string]struct{}) []string {
 	values := make([]string, 0, len(scopes))
 	for scope := range scopes {
 		values = append(values, scope)
 	}
 	sort.Strings(values)
-	return strings.Join(values, ", ")
+	return values
+}
+
+func formatScopes(scopes []string) string {
+	if len(scopes) == 0 {
+		return "-"
+	}
+	return strings.Join(scopes, ", ")
+}
+
+func formatAvailability(available *bool) string {
+	if available == nil {
+		return "-"
+	}
+	if *available {
+		return "yes"
+	}
+	return "no"
 }
 
 func formatSource(source any) string {

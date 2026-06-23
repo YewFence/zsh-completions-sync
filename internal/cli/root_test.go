@@ -69,6 +69,86 @@ func TestListCommand(t *testing.T) {
 	if !strings.Contains(output, "Tool") || !strings.Contains(output, "kubectl") {
 		t.Fatalf("unexpected output: %q", output)
 	}
+	if !strings.Contains(output, "Available") {
+		t.Fatalf("availability column missing: %q", output)
+	}
+}
+
+func TestListCommandSupportsJSONFormat(t *testing.T) {
+	tempDir := t.TempDir()
+	sourcePath := writeTestCompletionSource(t, tempDir)
+	writeProjectConfig(t, tempDir, `[tools.local-tool]
+scopes = ["project"]
+check = false
+file = "`+sourcePath+`"
+`)
+	restoreWorkingDir := chdir(t, tempDir)
+	defer restoreWorkingDir()
+
+	buffer := new(bytes.Buffer)
+	command := newTestRootCommand(buffer, "list", "--scope", "project", "--format", "json")
+	if err := command.Execute(); err != nil {
+		t.Fatalf("execute list command: %v", err)
+	}
+
+	output := buffer.String()
+	for _, expected := range []string{`"name": "local-tool"`, `"available": true`, `"scopes": [`} {
+		if !strings.Contains(output, expected) {
+			t.Fatalf("expected %q in json output: %q", expected, output)
+		}
+	}
+}
+
+func TestListCommandShowsUnavailableTool(t *testing.T) {
+	tempDir := t.TempDir()
+	sourcePath := writeTestCompletionSource(t, tempDir)
+	writeProjectConfig(t, tempDir, `[tools.local-tool]
+scopes = ["project"]
+check = "zcs-definitely-missing-tool"
+file = "`+sourcePath+`"
+`)
+	restoreWorkingDir := chdir(t, tempDir)
+	defer restoreWorkingDir()
+
+	buffer := new(bytes.Buffer)
+	command := newTestRootCommand(buffer, "list", "--scope", "project")
+	if err := command.Execute(); err != nil {
+		t.Fatalf("execute list command: %v", err)
+	}
+
+	output := buffer.String()
+	if !strings.Contains(output, "local-tool") || !strings.Contains(output, "no") {
+		t.Fatalf("unexpected output: %q", output)
+	}
+}
+
+func TestGenerateCommandCompletesToolArgs(t *testing.T) {
+	tempDir := t.TempDir()
+	localSourcePath := writeNamedTestCompletionSource(t, tempDir, "local-tool")
+	otherSourcePath := writeNamedTestCompletionSource(t, tempDir, "other-tool")
+	writeProjectConfig(t, tempDir, `[tools.local-tool]
+scopes = ["project"]
+check = false
+file = "`+localSourcePath+`"
+
+[tools.other-tool]
+scopes = ["project"]
+check = false
+file = "`+otherSourcePath+`"
+`)
+	restoreWorkingDir := chdir(t, tempDir)
+	defer restoreWorkingDir()
+
+	buffer := new(bytes.Buffer)
+	command := newTestRootCommand(buffer, "__complete", "generate", "--scope", "project", "local-tool", "")
+	if err := command.Execute(); err != nil {
+		t.Fatalf("execute completion command: %v", err)
+	}
+
+	output := buffer.String()
+	if strings.Contains(output, "local-tool") || !strings.Contains(output, "other-tool") || !strings.Contains(output, ":4") {
+		t.Fatalf("unexpected completion output: %q", output)
+	}
 }
 
 func TestGenerateCommandDefaultsToGlobalScope(t *testing.T) {

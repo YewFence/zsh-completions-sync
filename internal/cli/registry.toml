@@ -61,3 +61,7 @@ command = ["rustup", "completions", "zsh"]
 [tools.bw]
 scopes = ["global"]
 command = ["bw", "completion", "--shell", "zsh"]
+
+[tools.zcs]
+scopes = ["global"]
+command = ["zcs", "completion", "zsh"]
