@@ -93,7 +93,7 @@ file = "`+sourcePath+`"
 	assertFileContent(t, filepath.Join(outputDir, "_local-tool"), "#compdef local-tool\n")
 }
 
-func TestGenerateProjectCommandWritesConfiguredCompletion(t *testing.T) {
+func TestGenerateCommandSupportsProjectScope(t *testing.T) {
 	tempDir := t.TempDir()
 	sourceDir := filepath.Join(tempDir, "source")
 	if err := os.MkdirAll(sourceDir, 0o755); err != nil {
@@ -131,9 +131,9 @@ file = "` + sourcePath + `"
 	}
 
 	buffer := new(bytes.Buffer)
-	command := newTestRootCommand(buffer, "generate", "project")
+	command := newTestRootCommand(buffer, "generate", "--scope", "project")
 	if err := command.Execute(); err != nil {
-		t.Fatalf("execute generate project command: %v", err)
+		t.Fatalf("execute generate command: %v", err)
 	}
 
 	destination := filepath.Join(tempDir, ".completions", "zsh", "_local-tool")
@@ -146,7 +146,7 @@ file = "` + sourcePath + `"
 	}
 }
 
-func TestGenerateProjectCommandSupportsOutputFlag(t *testing.T) {
+func TestGenerateCommandSupportsProjectScopeOutputFlag(t *testing.T) {
 	tempDir := t.TempDir()
 	sourcePath := writeTestCompletionSource(t, tempDir)
 	writeProjectConfig(t, tempDir, `[tools.local-tool]
@@ -159,15 +159,15 @@ file = "`+sourcePath+`"
 
 	outputDir := filepath.Join(tempDir, "custom-output")
 	buffer := new(bytes.Buffer)
-	command := newTestRootCommand(buffer, "generate", "project", "--output", outputDir)
+	command := newTestRootCommand(buffer, "generate", "--scope", "project", "--output", outputDir)
 	if err := command.Execute(); err != nil {
-		t.Fatalf("execute generate project command: %v", err)
+		t.Fatalf("execute generate command: %v", err)
 	}
 
 	assertFileContent(t, filepath.Join(outputDir, "_local-tool"), "#compdef local-tool\n")
 }
 
-func TestGenerateProjectCommandSupportsOutputEnv(t *testing.T) {
+func TestGenerateCommandSupportsProjectScopeOutputEnv(t *testing.T) {
 	tempDir := t.TempDir()
 	sourcePath := writeTestCompletionSource(t, tempDir)
 	writeProjectConfig(t, tempDir, `[tools.local-tool]
@@ -181,15 +181,15 @@ file = "`+sourcePath+`"
 	outputDir := filepath.Join(tempDir, "env-output")
 	t.Setenv("ZCS_OUTPUT_DIR", outputDir)
 	buffer := new(bytes.Buffer)
-	command := newTestRootCommand(buffer, "generate", "project")
+	command := newTestRootCommand(buffer, "generate", "--scope", "project")
 	if err := command.Execute(); err != nil {
-		t.Fatalf("execute generate project command: %v", err)
+		t.Fatalf("execute generate command: %v", err)
 	}
 
 	assertFileContent(t, filepath.Join(outputDir, "_local-tool"), "#compdef local-tool\n")
 }
 
-func TestGenerateProjectCommandSupportsSettingsOutputDir(t *testing.T) {
+func TestGenerateCommandSupportsProjectScopeSettingsOutputDir(t *testing.T) {
 	tempDir := t.TempDir()
 	sourcePath := writeTestCompletionSource(t, tempDir)
 	writeProjectConfig(t, tempDir, `[settings]
@@ -204,15 +204,15 @@ file = "`+sourcePath+`"
 	defer restoreWorkingDir()
 
 	buffer := new(bytes.Buffer)
-	command := newTestRootCommand(buffer, "generate", "project")
+	command := newTestRootCommand(buffer, "generate", "--scope", "project")
 	if err := command.Execute(); err != nil {
-		t.Fatalf("execute generate project command: %v", err)
+		t.Fatalf("execute generate command: %v", err)
 	}
 
 	assertFileContent(t, filepath.Join(tempDir, "settings-output", "_local-tool"), "#compdef local-tool\n")
 }
 
-func TestGenerateProjectCommandFlagOutputOverridesEnvAndSettings(t *testing.T) {
+func TestGenerateCommandProjectScopeFlagOutputOverridesEnvAndSettings(t *testing.T) {
 	tempDir := t.TempDir()
 	sourcePath := writeTestCompletionSource(t, tempDir)
 	writeProjectConfig(t, tempDir, `[settings]
@@ -229,15 +229,15 @@ file = "`+sourcePath+`"
 	flagOutputDir := filepath.Join(tempDir, "flag-output")
 	t.Setenv("ZCS_OUTPUT_DIR", filepath.Join(tempDir, "env-output"))
 	buffer := new(bytes.Buffer)
-	command := newTestRootCommand(buffer, "generate", "project", "--output", flagOutputDir)
+	command := newTestRootCommand(buffer, "generate", "--scope", "project", "--output", flagOutputDir)
 	if err := command.Execute(); err != nil {
-		t.Fatalf("execute generate project command: %v", err)
+		t.Fatalf("execute generate command: %v", err)
 	}
 
 	assertFileContent(t, filepath.Join(flagOutputDir, "_local-tool"), "#compdef local-tool\n")
 }
 
-func TestGenerateProjectCommandSupportsJobsFlag(t *testing.T) {
+func TestGenerateCommandSupportsProjectScopeJobsFlag(t *testing.T) {
 	tempDir := t.TempDir()
 	sourcePath := writeTestCompletionSource(t, tempDir)
 	writeProjectConfig(t, tempDir, `[tools.local-tool]
@@ -249,15 +249,15 @@ file = "`+sourcePath+`"
 	defer restoreWorkingDir()
 
 	buffer := new(bytes.Buffer)
-	command := newTestRootCommand(buffer, "generate", "project", "--jobs", "1")
+	command := newTestRootCommand(buffer, "generate", "-s", "project", "--jobs", "1")
 	if err := command.Execute(); err != nil {
-		t.Fatalf("execute generate project command: %v", err)
+		t.Fatalf("execute generate command: %v", err)
 	}
 
 	assertFileContent(t, filepath.Join(tempDir, ".completions", "zsh", "_local-tool"), "#compdef local-tool\n")
 }
 
-func TestGenerateProjectCommandSupportsToolArgs(t *testing.T) {
+func TestGenerateCommandSupportsProjectScopeToolArgs(t *testing.T) {
 	tempDir := t.TempDir()
 	localSourcePath := writeNamedTestCompletionSource(t, tempDir, "local-tool")
 	otherSourcePath := writeNamedTestCompletionSource(t, tempDir, "other-tool")
@@ -275,9 +275,9 @@ file = "`+otherSourcePath+`"
 	defer restoreWorkingDir()
 
 	buffer := new(bytes.Buffer)
-	command := newTestRootCommand(buffer, "generate", "project", "local-tool")
+	command := newTestRootCommand(buffer, "generate", "--scope", "project", "local-tool")
 	if err := command.Execute(); err != nil {
-		t.Fatalf("execute generate project command: %v", err)
+		t.Fatalf("execute generate command: %v", err)
 	}
 
 	outputDir := filepath.Join(tempDir, ".completions", "zsh")
@@ -287,33 +287,46 @@ file = "`+otherSourcePath+`"
 	}
 }
 
-func TestGenerateProjectCommandRejectsUnknownToolArg(t *testing.T) {
+func TestGenerateCommandProjectScopeRejectsUnknownToolArg(t *testing.T) {
 	tempDir := t.TempDir()
 	writeProjectConfig(t, tempDir, "")
 	restoreWorkingDir := chdir(t, tempDir)
 	defer restoreWorkingDir()
 
 	buffer := new(bytes.Buffer)
-	command := newTestRootCommand(buffer, "generate", "project", "missing-tool")
+	command := newTestRootCommand(buffer, "generate", "--scope", "project", "missing-tool")
 	if err := command.Execute(); err == nil {
 		t.Fatal("expected unknown tool error")
 	}
 }
 
-func TestGenerateProjectCommandRejectsInvalidJobs(t *testing.T) {
+func TestGenerateCommandRejectsInvalidScope(t *testing.T) {
 	tempDir := t.TempDir()
 	writeProjectConfig(t, tempDir, "")
 	restoreWorkingDir := chdir(t, tempDir)
 	defer restoreWorkingDir()
 
 	buffer := new(bytes.Buffer)
-	command := newTestRootCommand(buffer, "generate", "project", "--jobs", "0")
+	command := newTestRootCommand(buffer, "generate", "--scope", "workspace")
+	if err := command.Execute(); err == nil {
+		t.Fatal("expected invalid scope error")
+	}
+}
+
+func TestGenerateCommandRejectsInvalidJobs(t *testing.T) {
+	tempDir := t.TempDir()
+	writeProjectConfig(t, tempDir, "")
+	restoreWorkingDir := chdir(t, tempDir)
+	defer restoreWorkingDir()
+
+	buffer := new(bytes.Buffer)
+	command := newTestRootCommand(buffer, "generate", "--scope", "project", "--jobs", "0")
 	if err := command.Execute(); err == nil {
 		t.Fatal("expected invalid jobs error")
 	}
 }
 
-func TestGenerateProjectCommandSkipsDisabledTool(t *testing.T) {
+func TestGenerateCommandProjectScopeSkipsDisabledTool(t *testing.T) {
 	tempDir := t.TempDir()
 	sourcePath := writeTestCompletionSource(t, tempDir)
 	writeProjectConfig(t, tempDir, `[tools.local-tool]
@@ -326,14 +339,27 @@ file = "`+sourcePath+`"
 	defer restoreWorkingDir()
 
 	buffer := new(bytes.Buffer)
-	command := newTestRootCommand(buffer, "generate", "project")
+	command := newTestRootCommand(buffer, "generate", "--scope", "project")
 	if err := command.Execute(); err != nil {
-		t.Fatalf("execute generate project command: %v", err)
+		t.Fatalf("execute generate command: %v", err)
 	}
 
 	destination := filepath.Join(tempDir, ".completions", "zsh", "_local-tool")
 	if _, err := os.Stat(destination); !os.IsNotExist(err) {
 		t.Fatalf("expected disabled tool to be skipped, stat error: %v", err)
+	}
+}
+
+func TestGenerateCommandDoesNotSupportLegacyProjectSubcommand(t *testing.T) {
+	tempDir := t.TempDir()
+	writeProjectConfig(t, tempDir, "")
+	restoreWorkingDir := chdir(t, tempDir)
+	defer restoreWorkingDir()
+
+	buffer := new(bytes.Buffer)
+	command := newTestRootCommand(buffer, "generate", "project")
+	if err := command.Execute(); err == nil {
+		t.Fatal("expected legacy project subcommand to be rejected")
 	}
 }
 
@@ -384,11 +410,24 @@ func TestInitProjectCommandSupportsNoFlags(t *testing.T) {
 	}
 
 	output := buffer.String()
-	if strings.Contains(output, "zcs generate project") || strings.Contains(output, "compinit") {
+	if strings.Contains(output, "zcs generate --scope project") || strings.Contains(output, "compinit") {
 		t.Fatalf("unexpected disabled sections: %q", output)
 	}
 	if !strings.Contains(output, "$PWD/.completions/zsh") || !strings.Contains(output, "$HOME/.zsh/completions") {
 		t.Fatalf("unexpected output: %q", output)
+	}
+}
+
+func TestInitProjectCommandSyncsProjectScope(t *testing.T) {
+	buffer := new(bytes.Buffer)
+	command := newTestRootCommand(buffer, "init", "project")
+	if err := command.Execute(); err != nil {
+		t.Fatalf("execute init project command: %v", err)
+	}
+
+	output := buffer.String()
+	if !strings.Contains(output, "zcs generate --scope project") {
+		t.Fatalf("project sync command missing: %q", output)
 	}
 }
 

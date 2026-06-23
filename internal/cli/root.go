@@ -22,19 +22,13 @@ func NewRootCommand(version string) *cobra.Command {
 }
 
 func newGenerateCommand() *cobra.Command {
-	command := newGenerateScopeCommand("global", "generate [tool...]", "Generate global completions.")
-	command.AddCommand(newGenerateScopeCommand("global", "global [tool...]", "Generate global completions."))
-	command.AddCommand(newGenerateScopeCommand("project", "project [tool...]", "Generate project-local completions."))
-	return command
-}
-
-func newGenerateScopeCommand(scope string, use string, short string) *cobra.Command {
+	var scope string
 	var outputDir string
 	var jobs int
 
 	command := &cobra.Command{
-		Use:   use,
-		Short: short,
+		Use:   "generate [tool...]",
+		Short: "Generate completion scripts.",
 		Args:  cobra.ArbitraryArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			projectDir, err := os.Getwd()
@@ -60,8 +54,18 @@ func newGenerateScopeCommand(scope string, use string, short string) *cobra.Comm
 			return syncTools(tools, resolvedOutputDir, jobs, cmd.ErrOrStderr())
 		},
 	}
+	command.Flags().StringVarP(&scope, "scope", "s", "global", "Generate completions for the selected scope.")
 	command.Flags().StringVarP(&outputDir, "output", "o", "", "Output directory for generated completion scripts.")
 	command.Flags().IntVarP(&jobs, "jobs", "j", 8, "Maximum number of tools to synchronize concurrently.")
+	_ = command.RegisterFlagCompletionFunc("scope", func(*cobra.Command, []string, string) ([]string, cobra.ShellCompDirective) {
+		return []string{"global", "project"}, cobra.ShellCompDirectiveNoFileComp
+	})
+	command.PreRunE = func(cmd *cobra.Command, args []string) error {
+		if scope == "global" || scope == "project" {
+			return nil
+		}
+		return fmt.Errorf("invalid scope %q, expected global or project", scope)
+	}
 	return command
 }
 
@@ -112,7 +116,7 @@ func newInitProjectCommand() *cobra.Command {
 			return writeInitScript(options, cmd.OutOrStdout())
 		},
 	}
-	command.Flags().BoolVar(&noSync, "no-sync", false, "Do not run zcs generate project in the generated snippet.")
+	command.Flags().BoolVar(&noSync, "no-sync", false, "Do not run zcs generate --scope project in the generated snippet.")
 	command.Flags().BoolVar(&noCompinit, "no-compinit", false, "Do not include autoload -Uz compinit and compinit in the generated snippet.")
 	return command
 }
