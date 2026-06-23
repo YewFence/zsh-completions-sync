@@ -89,15 +89,19 @@ description = "Install documentation site dependencies"
 dir = "docs"
 run = "pnpm install"
 
+[tasks.'cli:docs']
+description = "Generate CLI reference documentation"
+run = "go run ./cmd/zcs-docs"
+
 [tasks.'docs:dev']
 description = "Start the VitePress documentation site"
-depends = ["docs:install"]
+depends = ["cli:docs", "docs:install"]
 dir = "docs"
 run = "pnpm dev"
 
 [tasks.'docs:build']
 description = "Build the VitePress documentation site"
-depends = ["docs:install"]
+depends = ["cli:docs", "docs:install"]
 dir = "docs"
 run = "pnpm build"
 
