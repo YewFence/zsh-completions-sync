@@ -164,7 +164,7 @@ jobs:
 
       - name: Package artifact
         env:
-          ARTIFACT_NAME: ${{ needs.version.outputs.tag }}-${{ matrix.goos }}-${{ matrix.goarch }}
+          ARTIFACT_NAME: ${{ github.event.repository.name }}-${{ needs.version.outputs.tag }}-${{ matrix.goos }}-${{ matrix.goarch }}
           ARTIFACT_EXT: ${{ matrix.goos == 'windows' && 'zip' || 'tar.gz' }}
         run: |
           binary_path="$(find dist -maxdepth 1 -type f ! -name '*.tar.gz' ! -name '*.zip' -print -quit)"

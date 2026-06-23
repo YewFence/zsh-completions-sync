@@ -1,0 +1,11 @@
+[tools]
+go = "1"
+"go:golang.org/x/vuln/cmd/govulncheck" = "latest"
+
+[tasks.govulncheck]
+description = "Run Go vulnerability checks"
+run = "govulncheck ./..."
+
+[tasks.'mod:verify']
+description = "Verify Go module dependencies"
+run = "go mod verify"

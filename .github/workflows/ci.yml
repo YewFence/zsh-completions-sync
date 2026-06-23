@@ -52,6 +52,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       MISE_TASK_RUN_AUTO_INSTALL: "false"
+      MISE_ENV: "ci"
       MISE_LOCKED: "1"
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
@@ -76,10 +77,8 @@ jobs:
       - name: Verify dependencies
         run: mise run mod:verify
 
-      - id: govulncheck
-        uses: golang/govulncheck-action@b625fbe08f3bccbe446d94fbf87fcc875a4f50ee # v1.0.4
-        with:
-          repo-checkout: false
+      - name: Run govulncheck
+        run: mise run govulncheck
 
   docs:
     name: Docs
