@@ -74,3 +74,15 @@ command = ["zcs", "completion", "zsh"]
 [tools.rmux]
 scopes = ["global"]
 file = { git = "https://github.com/YewFence/zsh-completions-sync.git", path = "completions/_rmux", ref = "main" }
+
+[tools.qmd]
+scopes = ["global"]
+file = { git = "https://github.com/YewFence/zsh-completions-sync.git", path = "completions/_qmd", ref = "main" }
+
+[tools.sem]
+scopes = ["global"]
+command = ["sem", "completions", "zsh"]
+
+[tools.rip]
+scopes = ["global"]
+command = ["rip", "completions", "zsh"]
