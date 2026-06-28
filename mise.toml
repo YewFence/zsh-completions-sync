@@ -15,6 +15,7 @@ pnpm = "11"
 # https://golangci-lint.run/
 golangci-lint = "2"
 pkl = "latest"
+hk = "latest"
 
 [env]
 
