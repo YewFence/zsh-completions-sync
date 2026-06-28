@@ -79,6 +79,10 @@ file = { git = "https://github.com/YewFence/zsh-completions-sync.git", path = "c
 scopes = ["global"]
 file = { git = "https://github.com/YewFence/zsh-completions-sync.git", path = "completions/_qmd", ref = "main" }
 
+[tools.waydroid]
+scopes = ["global"]
+file = { git = "https://github.com/YewFence/zsh-completions-sync.git", path = "completions/_waydroid", ref = "main" }
+
 [tools.sem]
 scopes = ["global"]
 command = ["sem", "completions", "zsh"]

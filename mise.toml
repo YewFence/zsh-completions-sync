@@ -14,6 +14,7 @@ node = "26"
 pnpm = "11"
 # https://golangci-lint.run/
 golangci-lint = "2"
+pkl = "latest"
 
 [env]
 
@@ -57,11 +58,12 @@ run = "golangci-lint run"
 
 [tasks.check]
 description = "Run Go formatting checks, static checks, build, and lint"
+depends = ["fmt", "tidy:check"]
 run = [
-  { task = "fmt" },
   { task = "vet" },
   { task = "build" },
   { task = "lint" },
+  { task = "test"},
 ]
 
 [tasks.cli]
@@ -92,6 +94,10 @@ run = "pnpm install"
 [tasks.'cli:docs']
 description = "Generate CLI reference documentation"
 run = "go run ./cmd/zcs-docs"
+
+[tasks.'completions:gen']
+description = "Generate maintained static zsh completion scripts from Pkl specs"
+run = "go run ./cmd/zcs-completion-gen"
 
 [tasks.'docs:dev']
 description = "Start the VitePress documentation site"

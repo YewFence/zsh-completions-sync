@@ -1,0 +1,451 @@
+amends "CompletionSpec.pkl"
+
+local outputFormats = new Listing {
+  "cli:colorized command-line output"
+  "json:JSON output"
+  "csv:CSV output"
+  "md:Markdown output"
+  "xml:XML output"
+  "files:docid, score, file path, and context"
+}
+
+local chunkStrategies = new Listing {
+  "regex:regex-based chunking"
+  "auto:AST-aware chunking for supported code files"
+}
+
+name = "qmd"
+description = "Quick Markdown Search"
+
+helpers {
+  ["collections"] =
+    """
+    _qmd_collections() {
+      local -a collections
+      collections=(${(f)"$(_call_program qmd-collections qmd collection list 2>/dev/null | awk 'NF { print $1 }')"})
+      _describe -t collections 'collection' collections
+    }
+    """
+}
+
+values {
+  ["output-formats"] = outputFormats
+  ["chunk-strategies"] = chunkStrategies
+}
+
+optionGroups {
+  ["global"] = new Listing {
+    new { flags = new Listing { "-h"; "--help" }; description = "show help" }
+    new { flags = new Listing { "-v"; "--version" }; description = "show version" }
+    new {
+      flags = new Listing { "--index" }
+      description = "use named index"
+      argument = "index name"
+    }
+    new { flags = new Listing { "--no-gpu" }; description = "force CPU mode" }
+    new { flags = new Listing { "--skill" }; description = "print the QMD skill" }
+  }
+
+  ["search"] = new Listing {
+    new {
+      flags = new Listing { "-n"; "--number" }
+      description = "number of results"
+      argument = "number"
+    }
+    new {
+      flags = new Listing { "-c"; "--collection" }
+      description = "restrict to collection"
+      argument = "collection"
+      completion = "_qmd_collections"
+    }
+    new { flags = new Listing { "--all" }; description = "return all matches" }
+    new {
+      flags = new Listing { "--min-score" }
+      description = "minimum score threshold"
+      argument = "score"
+    }
+    new { flags = new Listing { "--full" }; description = "show full document content" }
+    new { flags = new Listing { "--line-numbers" }; description = "add line numbers to output" }
+    new { flags = new Listing { "--explain" }; description = "include retrieval score traces" }
+    new {
+      flags = new Listing { "--intent" }
+      description = "disambiguation context"
+      argument = "intent"
+    }
+    new { flags = new Listing { "--no-rerank" }; description = "skip LLM reranking" }
+    new {
+      flags = new Listing { "-C"; "--candidate-limit" }
+      description = "maximum candidates to rerank"
+      argument = "number"
+    }
+    new {
+      flags = new Listing { "--chunk-strategy" }
+      description = "chunk selection strategy"
+      argument = "strategy"
+      completion = "value:chunk-strategies"
+    }
+    new {
+      flags = new Listing { "--full-path" }
+      description = "emit filesystem paths instead of qmd URIs"
+    }
+    new {
+      flags = new Listing { "--format" }
+      description = "output format"
+      argument = "format"
+      completion = "value:output-formats"
+    }
+    new { flags = new Listing { "--json" }; description = "JSON output" }
+    new { flags = new Listing { "--csv" }; description = "CSV output" }
+    new { flags = new Listing { "--md" }; description = "Markdown output" }
+    new { flags = new Listing { "--xml" }; description = "XML output" }
+    new { flags = new Listing { "--files" }; description = "files output" }
+  }
+
+  ["get"] = new Listing {
+    new {
+      flags = new Listing { "-l"; "--lines" }
+      description = "maximum lines to return"
+      argument = "lines"
+    }
+    new { flags = new Listing { "--from" }; description = "start line"; argument = "line" }
+    new { flags = new Listing { "--no-line-numbers" }; description = "disable line numbers" }
+    new {
+      flags = new Listing { "--full-path" }
+      description = "emit filesystem paths instead of qmd URIs"
+    }
+  }
+
+  ["multi-get"] = new Listing {
+    new {
+      flags = new Listing { "-l"; "--lines" }
+      description = "maximum lines per file"
+      argument = "lines"
+    }
+    new {
+      flags = new Listing { "--max-bytes" }
+      description = "skip files larger than bytes"
+      argument = "bytes"
+    }
+    new { flags = new Listing { "--no-line-numbers" }; description = "disable line numbers" }
+    new {
+      flags = new Listing { "--full-path" }
+      description = "emit filesystem paths instead of qmd URIs"
+    }
+    new {
+      flags = new Listing { "--format" }
+      description = "output format"
+      argument = "format"
+      completion = "value:output-formats"
+    }
+    new { flags = new Listing { "--json" }; description = "JSON output" }
+    new { flags = new Listing { "--csv" }; description = "CSV output" }
+    new { flags = new Listing { "--md" }; description = "Markdown output" }
+    new { flags = new Listing { "--xml" }; description = "XML output" }
+    new { flags = new Listing { "--files" }; description = "files output" }
+  }
+}
+
+globalOptionGroups = new Listing { "global" }
+
+commands {
+  new { name = "init"; description = "initialize a project-local index" }
+  new {
+    name = "collection"
+    description = "manage collections"
+    commands {
+      new { name = "list"; description = "list all collections" }
+      new {
+        name = "add"
+        description = "add a collection"
+        options {
+          new {
+            flags = new Listing { "--name" }
+            description = "collection name"
+            argument = "name"
+          }
+          new {
+            flags = new Listing { "--mask" }
+            description = "glob pattern"
+            argument = "glob pattern"
+          }
+        }
+        arguments {
+          new { name = "directory"; completion = "_files -/" }
+        }
+      }
+      new {
+        name = "remove"
+        aliases = new Listing { "rm" }
+        description = "remove a collection"
+        arguments {
+          new { name = "collection"; completion = "_qmd_collections" }
+          new { name = "command word"; repeatable = true }
+        }
+      }
+      new {
+        name = "rename"
+        aliases = new Listing { "mv" }
+        description = "rename a collection"
+        arguments {
+          new { name = "old collection"; completion = "_qmd_collections" }
+          new { name = "new collection name" }
+        }
+      }
+      new {
+        name = "show"
+        aliases = new Listing { "info" }
+        description = "show collection details"
+        arguments {
+          new { name = "collection"; completion = "_qmd_collections" }
+          new { name = "command word"; repeatable = true }
+        }
+      }
+      new {
+        name = "update-cmd"
+        aliases = new Listing { "set-update" }
+        description = "set pre-update command"
+        arguments {
+          new { name = "collection"; completion = "_qmd_collections" }
+          new { name = "command word"; repeatable = true }
+        }
+      }
+      new {
+        name = "include"
+        description = "include collection in default queries"
+        arguments {
+          new { name = "collection"; completion = "_qmd_collections" }
+          new { name = "command word"; repeatable = true }
+        }
+      }
+      new {
+        name = "exclude"
+        description = "exclude collection from default queries"
+        arguments {
+          new { name = "collection"; completion = "_qmd_collections" }
+          new { name = "command word"; repeatable = true }
+        }
+      }
+      new { name = "help"; description = "show collection help" }
+    }
+  }
+  new {
+    name = "context"
+    description = "manage search context"
+    commands {
+      new {
+        name = "add"
+        description = "add context"
+        arguments {
+          new {
+            name = "path"
+            completion =
+              """
+              alternative:qmd-paths:qmd path:_guard "qmd://*" "qmd path"|files:file:_files
+              """
+            repeatable = true
+          }
+        }
+      }
+      new { name = "list"; description = "list contexts" }
+      new {
+        name = "rm"
+        aliases = new Listing { "remove" }
+        description = "remove context"
+        arguments {
+          new {
+            name = "path"
+            completion =
+              """
+              alternative:qmd-paths:qmd path:_guard "qmd://*" "qmd path"|files:file:_files
+              """
+            repeatable = true
+          }
+        }
+      }
+      new { name = "check"; description = "check paths missing context" }
+    }
+  }
+  new {
+    name = "ls"
+    description = "list collections or files"
+    arguments {
+      new {
+        name = "collection or qmd path"
+        completion =
+          """
+          alternative:collections:collection:_qmd_collections|qmd-paths:qmd path:_guard "qmd://*" "qmd path"
+          """
+      }
+    }
+  }
+  new {
+    name = "get"
+    description = "get a document by path or docid"
+    optionGroups = new Listing { "get" }
+    arguments { new { name = "file or docid"; completion = "_files" } }
+  }
+  new {
+    name = "multi-get"
+    description = "get multiple documents by glob or list"
+    optionGroups = new Listing { "multi-get" }
+    arguments { new { name = "glob, list, or docid"; completion = "_files" } }
+  }
+  new { name = "status"; description = "show index status" }
+  new { name = "doctor"; description = "diagnose the install" }
+  new {
+    name = "update"
+    description = "re-index collections"
+    options {
+      new {
+        flags = new Listing { "--pull" }
+        description = "run collection pre-update commands before indexing"
+      }
+    }
+  }
+  new {
+    name = "embed"
+    description = "generate vector embeddings"
+    options {
+      new { flags = new Listing { "-f"; "--force" }; description = "re-embed everything" }
+      new {
+        flags = new Listing { "-c"; "--collection" }
+        description = "embed collection"
+        argument = "collection"
+        completion = "_qmd_collections"
+      }
+      new {
+        flags = new Listing { "--chunk-strategy" }
+        description = "chunk strategy"
+        argument = "strategy"
+        completion = "value:chunk-strategies"
+      }
+      new {
+        flags = new Listing { "--max-docs-per-batch" }
+        description = "maximum docs per batch"
+        argument = "number"
+      }
+      new {
+        flags = new Listing { "--max-batch-mb" }
+        description = "maximum batch size in MB"
+        argument = "megabytes"
+      }
+      new {
+        flags = new Listing { "--timeout" }
+        description = "maximum duration"
+        argument = "duration"
+      }
+    }
+  }
+  new {
+    name = "pull"
+    description = "pull local models"
+    options {
+      new { flags = new Listing { "--refresh" }; description = "refresh cached model metadata" }
+    }
+  }
+  new {
+    name = "search"
+    description = "full-text keyword search"
+    optionGroups = new Listing { "search" }
+    arguments { new { name = "query"; repeatable = true } }
+  }
+  new {
+    name = "vsearch"
+    description = "vector similarity search"
+    optionGroups = new Listing { "search" }
+    arguments { new { name = "query"; repeatable = true } }
+  }
+  new {
+    name = "vector-search"
+    description = "vector similarity search"
+    optionGroups = new Listing { "search" }
+    arguments { new { name = "query"; repeatable = true } }
+  }
+  new {
+    name = "query"
+    description = "hybrid search with expansion and reranking"
+    optionGroups = new Listing { "search" }
+    arguments { new { name = "query"; repeatable = true } }
+  }
+  new {
+    name = "deep-search"
+    description = "hybrid search with expansion and reranking"
+    optionGroups = new Listing { "search" }
+    arguments { new { name = "query"; repeatable = true } }
+  }
+  new {
+    name = "bench"
+    description = "run search quality benchmarks"
+    options {
+      new {
+        flags = new Listing { "-c"; "--collection" }
+        description = "benchmark collection"
+        argument = "collection"
+        completion = "_qmd_collections"
+      }
+      new { flags = new Listing { "--json" }; description = "JSON output" }
+    }
+    arguments {
+      new {
+        name = "fixture JSON"
+        completion =
+          """
+          _files -g "*.json(-.)"
+          """
+      }
+    }
+  }
+  new {
+    name = "mcp"
+    description = "start MCP server"
+    options {
+      new { flags = new Listing { "--http" }; description = "start MCP server with HTTP transport" }
+      new { flags = new Listing { "--daemon" }; description = "start as background daemon" }
+      new { flags = new Listing { "--port" }; description = "HTTP port"; argument = "port" }
+      new {
+        flags = new Listing { "--host" }
+        description = "HTTP bind host"
+        argument = "host"
+        completion = "_hosts"
+      }
+    }
+    commands {
+      new { name = "stop"; description = "stop background MCP daemon" }
+      new { name = "status"; description = "show MCP daemon status" }
+    }
+  }
+  new {
+    name = "skills"
+    description = "list QMD skills"
+    options {
+      new { flags = new Listing { "--json" }; description = "JSON output" }
+      new { flags = new Listing { "--full" }; description = "include full skill content" }
+      new { flags = new Listing { "--all" }; description = "include all skills" }
+    }
+    arguments { new { name = "skill name"; repeatable = true } }
+  }
+  new {
+    name = "skill"
+    description = "show or install the QMD skill"
+    commands {
+      new { name = "show"; description = "print the QMD skill" }
+      new {
+        name = "install"
+        description = "install QMD skill"
+        options {
+          new {
+            flags = new Listing { "--global" }
+            description = "install into global skills directory"
+          }
+          new { flags = new Listing { "--yes" }; description = "also create Claude skill symlink" }
+          new {
+            flags = new Listing { "-f"; "--force" }
+            description = "replace existing install or symlink"
+          }
+        }
+      }
+      new { name = "help"; description = "show skill help" }
+    }
+  }
+  new { name = "cleanup"; description = "clean cache and orphaned data" }
+}

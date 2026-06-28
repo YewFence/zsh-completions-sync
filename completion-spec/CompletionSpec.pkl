@@ -1,0 +1,53 @@
+name: String
+
+description: String = ""
+
+helpers: Mapping<String, String> = new Mapping {}
+
+values: Mapping<String, Listing> = new Mapping {}
+
+optionGroups: Mapping<String, Listing> = new Mapping {}
+
+globalOptionGroups: Listing = new Listing {}
+
+globalOptions: Listing = new Listing {}
+
+commands: Listing = new Listing {}
+
+class Command {
+  name: String
+
+  description: String = ""
+
+  aliases: Listing = new Listing {}
+
+  optionGroups: Listing = new Listing {}
+
+  options: Listing = new Listing {}
+
+  arguments: Listing = new Listing {}
+
+  commands: Listing = new Listing {}
+}
+
+class Option {
+  flags: Listing
+
+  description: String = ""
+
+  argument: String = ""
+
+  completion: String = ""
+
+  repeatable: Boolean = false
+}
+
+class Argument {
+  name: String
+
+  description: String = ""
+
+  completion: String = ""
+
+  repeatable: Boolean = false
+}

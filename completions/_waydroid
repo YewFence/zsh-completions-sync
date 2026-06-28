@@ -1,0 +1,314 @@
+#compdef waydroid
+
+# Copyright (c) 2026 YewFence
+# Generated from completion-spec/waydroid.pkl; do not edit by hand.
+
+
+_waydroid_rom_types() {
+  local -a values
+  values=(
+    'lineage:LineageOS'
+    'bliss:Bliss OS'
+  )
+  _describe -t rom-types 'rom-type' values
+}
+
+_waydroid_system_types() {
+  local -a values
+  values=(
+    'VANILLA:vanilla Android system image'
+    'FOSS:FOSS Android system image'
+    'GAPPS:Google Apps Android system image'
+  )
+  _describe -t system-types 'system-type' values
+}
+
+
+_waydroid_global_options=(
+  '(-h --help){-h,--help}[show help message and exit]'
+  '(-V --version){-V,--version}[show program version and exit]'
+  '(-l --log){-l,--log}[path to log file]:log file:_files'
+  '--details-to-stdout[print details to stdout]'
+  '(-v --verbose){-v,--verbose}[write more to log files]'
+  '(-q --quiet){-q,--quiet}[do not output log messages]'
+)
+
+
+_waydroid_session() {
+  local context state state_descr line curcontext="$curcontext"
+  typeset -A opt_args
+
+  local -a subcommands
+  subcommands=(
+    'start:start session'
+    'stop:stop session'
+  )
+
+  _arguments -C \
+    $_waydroid_global_options \
+    '1:command:->command' \
+    '*::arg:->arg'
+
+  case $state in
+    command)
+      _describe -t commands 'session command' subcommands
+      ;;
+    arg)
+      case $words[1] in
+        start)
+          ;;
+        stop)
+          ;;
+      esac
+      ;;
+  esac
+}
+
+_waydroid_container() {
+  local context state state_descr line curcontext="$curcontext"
+  typeset -A opt_args
+
+  local -a subcommands
+  subcommands=(
+    'start:start container'
+    'stop:stop container'
+    'restart:restart container'
+    'freeze:freeze container'
+    'unfreeze:unfreeze container'
+  )
+
+  _arguments -C \
+    $_waydroid_global_options \
+    '1:command:->command' \
+    '*::arg:->arg'
+
+  case $state in
+    command)
+      _describe -t commands 'container command' subcommands
+      ;;
+    arg)
+      case $words[1] in
+        start)
+          ;;
+        stop)
+          ;;
+        restart)
+          ;;
+        freeze)
+          ;;
+        unfreeze)
+          ;;
+      esac
+      ;;
+  esac
+}
+
+_waydroid_app() {
+  local context state state_descr line curcontext="$curcontext"
+  typeset -A opt_args
+
+  local -a subcommands
+  subcommands=(
+    'install:push a single package to the container and install it'
+    'remove:remove single app package from the container'
+    'launch:start single application'
+    'intent:start single application'
+    'list:list installed applications'
+  )
+
+  _arguments -C \
+    $_waydroid_global_options \
+    '1:command:->command' \
+    '*::arg:->arg'
+
+  case $state in
+    command)
+      _describe -t commands 'app command' subcommands
+      ;;
+    arg)
+      case $words[1] in
+        install)
+          _arguments \
+            '1:package:_files -g "*.apk(-.)"'
+          ;;
+        remove)
+          _arguments \
+            '1:package:'
+          ;;
+        launch)
+          _arguments \
+            '1:package:'
+          ;;
+        intent)
+          _arguments \
+            '1:action:' \
+            '2:uri:'
+          ;;
+        list)
+          ;;
+      esac
+      ;;
+  esac
+}
+
+_waydroid_prop() {
+  local context state state_descr line curcontext="$curcontext"
+  typeset -A opt_args
+
+  local -a subcommands
+  subcommands=(
+    'get:get value of property from container'
+    'set:set value to property on container'
+  )
+
+  _arguments -C \
+    $_waydroid_global_options \
+    '1:command:->command' \
+    '*::arg:->arg'
+
+  case $state in
+    command)
+      _describe -t commands 'prop command' subcommands
+      ;;
+    arg)
+      case $words[1] in
+        get)
+          _arguments \
+            '1:key:'
+          ;;
+        set)
+          _arguments \
+            '1:key:' \
+            '2:value:'
+          ;;
+      esac
+      ;;
+  esac
+}
+
+_waydroid_adb() {
+  local context state state_descr line curcontext="$curcontext"
+  typeset -A opt_args
+
+  local -a subcommands
+  subcommands=(
+    'connect:connect adb to the Android container'
+    'disconnect:disconnect adb from the Android container'
+  )
+
+  _arguments -C \
+    $_waydroid_global_options \
+    '1:command:->command' \
+    '*::arg:->arg'
+
+  case $state in
+    command)
+      _describe -t commands 'adb command' subcommands
+      ;;
+    arg)
+      case $words[1] in
+        connect)
+          ;;
+        disconnect)
+          ;;
+      esac
+      ;;
+  esac
+}
+
+_waydroid() {
+  local context state state_descr line curcontext="$curcontext"
+  typeset -A opt_args
+
+  local -a commands
+  commands=(
+    'status:quick check for the waydroid'
+    'log:follow the waydroid logfile'
+    'init:set up waydroid specific configs and install images'
+    'upgrade:upgrade images'
+    'session:session controller'
+    'container:container controller'
+    'app:applications controller'
+    'prop:android properties controller'
+    'show-full-ui:show android full screen in window'
+    'first-launch:start waydroid, prompting to initialize first if necessary'
+    'shell:run remote shell command'
+    'logcat:show android logcat'
+    'adb:manage adb connection'
+    'bugreport:create a bugreport archive interactively'
+  )
+
+  _arguments -C \
+    $_waydroid_global_options \
+    '1:command:->command' \
+    '*::arg:->arg'
+
+  case $state in
+    command)
+      _describe -t commands 'waydroid command' commands
+      ;;
+    arg)
+      curcontext="${curcontext%:*:*}:waydroid-$words[1]:"
+      case $words[1] in
+        status)
+          ;;
+        log)
+          _arguments \
+            '(-n --lines){-n,--lines}[count of initial output lines]:lines:' \
+            '(-c --clear){-c,--clear}[clear the log]'
+          ;;
+        init)
+          _arguments \
+            '(-i --images_path){-i,--images_path}[custom path to waydroid images]:images path:_files -/' \
+            '(-f --force){-f,--force}[re-initialize configs and images]' \
+            '(-c --system_channel){-c,--system_channel}[custom system channel]:system channel:' \
+            '(-v --vendor_channel){-v,--vendor_channel}[custom vendor channel]:vendor channel:' \
+            '(-r --rom_type){-r,--rom_type}[rom type]:rom type:_waydroid_rom_types' \
+            '(-s --system_type){-s,--system_type}[system type]:system type:_waydroid_system_types' \
+            '--client[run as user mode]'
+          ;;
+        upgrade)
+          _arguments \
+            '(-o --offline){-o,--offline}[just for updating configs]'
+          ;;
+        session)
+          _waydroid_session
+          ;;
+        container)
+          _waydroid_container
+          ;;
+        app)
+          _waydroid_app
+          ;;
+        prop)
+          _waydroid_prop
+          ;;
+        show-full-ui)
+          ;;
+        first-launch)
+          ;;
+        shell)
+          _arguments \
+            '(-u --uid){-u,--uid}[UID to run as]:uid:' \
+            '(-g --gid){-g,--gid}[GID to run as]:gid:' \
+            '(-s --context){-s,--context}[security context]:context:' \
+            '(-L --nolsm){-L,--nolsm}[do not perform security domain transition]' \
+            '(-C --allcaps){-C,--allcaps}[do not drop capabilities]' \
+            '(-G --nocgroup){-G,--nocgroup}[do not switch to the container cgroup]' \
+            '*:command:'
+          ;;
+        logcat)
+          _arguments \
+            '*:args:'
+          ;;
+        adb)
+          _waydroid_adb
+          ;;
+        bugreport)
+          ;;
+      esac
+      ;;
+  esac
+}
+
+_waydroid "$@"

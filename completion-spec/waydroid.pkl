@@ -1,0 +1,208 @@
+amends "CompletionSpec.pkl"
+
+name = "waydroid"
+description = "Waydroid"
+
+optionGroups {
+  ["global"] = new Listing {
+    new { flags = new Listing { "-h"; "--help" }; description = "show help message and exit" }
+    new { flags = new Listing { "-V"; "--version" }; description = "show program version and exit" }
+    new {
+      flags = new Listing { "-l"; "--log" }
+      description = "path to log file"
+      argument = "log file"
+      completion = "_files"
+    }
+    new { flags = new Listing { "--details-to-stdout" }; description = "print details to stdout" }
+    new { flags = new Listing { "-v"; "--verbose" }; description = "write more to log files" }
+    new { flags = new Listing { "-q"; "--quiet" }; description = "do not output log messages" }
+  }
+}
+
+globalOptionGroups = new Listing { "global" }
+
+commands {
+  new { name = "status"; description = "quick check for the waydroid" }
+  new {
+    name = "log"
+    description = "follow the waydroid logfile"
+    options {
+      new {
+        flags = new Listing { "-n"; "--lines" }
+        description = "count of initial output lines"
+        argument = "lines"
+      }
+      new { flags = new Listing { "-c"; "--clear" }; description = "clear the log" }
+    }
+  }
+  new {
+    name = "init"
+    description = "set up waydroid specific configs and install images"
+    options {
+      new {
+        flags = new Listing { "-i"; "--images_path" }
+        description = "custom path to waydroid images"
+        argument = "images path"
+        completion = "_files -/"
+      }
+      new {
+        flags = new Listing { "-f"; "--force" }
+        description = "re-initialize configs and images"
+      }
+      new {
+        flags = new Listing { "-c"; "--system_channel" }
+        description = "custom system channel"
+        argument = "system channel"
+      }
+      new {
+        flags = new Listing { "-v"; "--vendor_channel" }
+        description = "custom vendor channel"
+        argument = "vendor channel"
+      }
+      new {
+        flags = new Listing { "-r"; "--rom_type" }
+        description = "rom type"
+        argument = "rom type"
+        completion = "values:rom-types"
+      }
+      new {
+        flags = new Listing { "-s"; "--system_type" }
+        description = "system type"
+        argument = "system type"
+        completion = "values:system-types"
+      }
+      new { flags = new Listing { "--client" }; description = "run as user mode" }
+    }
+  }
+  new {
+    name = "upgrade"
+    description = "upgrade images"
+    options {
+      new { flags = new Listing { "-o"; "--offline" }; description = "just for updating configs" }
+    }
+  }
+  new {
+    name = "session"
+    description = "session controller"
+    commands {
+      new { name = "start"; description = "start session" }
+      new { name = "stop"; description = "stop session" }
+    }
+  }
+  new {
+    name = "container"
+    description = "container controller"
+    commands {
+      new { name = "start"; description = "start container" }
+      new { name = "stop"; description = "stop container" }
+      new { name = "restart"; description = "restart container" }
+      new { name = "freeze"; description = "freeze container" }
+      new { name = "unfreeze"; description = "unfreeze container" }
+    }
+  }
+  new {
+    name = "app"
+    description = "applications controller"
+    commands {
+      new {
+        name = "install"
+        description = "push a single package to the container and install it"
+        arguments {
+          new {
+            name = "package"
+            completion =
+              """
+              _files -g "*.apk(-.)"
+              """
+          }
+        }
+      }
+      new {
+        name = "remove"
+        description = "remove single app package from the container"
+        arguments { new { name = "package" } }
+      }
+      new {
+        name = "launch"
+        description = "start single application"
+        arguments { new { name = "package" } }
+      }
+      new {
+        name = "intent"
+        description = "start single application"
+        arguments { new { name = "action" }; new { name = "uri" } }
+      }
+      new { name = "list"; description = "list installed applications" }
+    }
+  }
+  new {
+    name = "prop"
+    description = "android properties controller"
+    commands {
+      new {
+        name = "get"
+        description = "get value of property from container"
+        arguments { new { name = "key" } }
+      }
+      new {
+        name = "set"
+        description = "set value to property on container"
+        arguments { new { name = "key" }; new { name = "value" } }
+      }
+    }
+  }
+  new { name = "show-full-ui"; description = "show android full screen in window" }
+  new {
+    name = "first-launch"
+    description = "start waydroid, prompting to initialize first if necessary"
+  }
+  new {
+    name = "shell"
+    description = "run remote shell command"
+    options {
+      new { flags = new Listing { "-u"; "--uid" }; description = "UID to run as"; argument = "uid" }
+      new { flags = new Listing { "-g"; "--gid" }; description = "GID to run as"; argument = "gid" }
+      new {
+        flags = new Listing { "-s"; "--context" }
+        description = "security context"
+        argument = "context"
+      }
+      new {
+        flags = new Listing { "-L"; "--nolsm" }
+        description = "do not perform security domain transition"
+      }
+      new { flags = new Listing { "-C"; "--allcaps" }; description = "do not drop capabilities" }
+      new {
+        flags = new Listing { "-G"; "--nocgroup" }
+        description = "do not switch to the container cgroup"
+      }
+    }
+    arguments { new { name = "command"; repeatable = true } }
+  }
+  new {
+    name = "logcat"
+    description = "show android logcat"
+    arguments { new { name = "args"; repeatable = true } }
+  }
+  new {
+    name = "adb"
+    description = "manage adb connection"
+    commands {
+      new { name = "connect"; description = "connect adb to the Android container" }
+      new { name = "disconnect"; description = "disconnect adb from the Android container" }
+    }
+  }
+  new { name = "bugreport"; description = "create a bugreport archive interactively" }
+}
+
+values {
+  ["rom-types"] = new Listing {
+    "lineage:LineageOS"
+    "bliss:Bliss OS"
+  }
+  ["system-types"] = new Listing {
+    "VANILLA:vanilla Android system image"
+    "FOSS:FOSS Android system image"
+    "GAPPS:Google Apps Android system image"
+  }
+}
