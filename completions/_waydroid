@@ -1,7 +1,7 @@
 #compdef waydroid
 
 # Copyright (c) 2026 YewFence
-# Generated from completion-spec/waydroid.pkl; do not edit by hand.
+# Generated from completion-spec/waydroid.cue; do not edit by hand.
 
 
 _waydroid_rom_types() {

@@ -16,6 +16,7 @@ pnpm = "11"
 golangci-lint = "2"
 pkl = "latest"
 hk = "latest"
+cue = "latest"
 
 [env]
 
@@ -97,7 +98,7 @@ description = "Generate CLI reference documentation"
 run = "go run ./cmd/zcs-docs"
 
 [tasks.'completions:gen']
-description = "Generate maintained static zsh completion scripts from Pkl specs"
+description = "Generate maintained static zsh completion scripts from CUE specs"
 run = "go run ./cmd/zcs-completion-gen"
 
 [tasks.'docs:dev']

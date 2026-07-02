@@ -379,7 +379,7 @@ func contains(values []string, needle string) bool {
 const zshTemplate = `#compdef {{ .Name }}
 
 # Copyright (c) 2026 YewFence
-# Generated from completion-spec/{{ .Name }}.pkl; do not edit by hand.
+# Generated from completion-spec/{{ .Name }}.cue; do not edit by hand.
 {{ range .Helpers }}
 {{ . }}
 {{ end }}

@@ -1,7 +1,7 @@
 #compdef qmd
 
 # Copyright (c) 2026 YewFence
-# Generated from completion-spec/qmd.pkl; do not edit by hand.
+# Generated from completion-spec/qmd.cue; do not edit by hand.
 
 _qmd_collections() {
   local -a collections

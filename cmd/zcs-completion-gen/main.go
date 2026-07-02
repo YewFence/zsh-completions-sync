@@ -19,12 +19,12 @@ func main() {
 func run(args []string) error {
 	specPaths := args
 	if len(specPaths) == 0 {
-		matches, err := filepath.Glob(filepath.Join("completion-spec", "*.pkl"))
+		matches, err := filepath.Glob(filepath.Join("completion-spec", "*.cue"))
 		if err != nil {
 			return err
 		}
 		for _, match := range matches {
-			if strings.HasSuffix(match, "CompletionSpec.pkl") {
+			if strings.HasSuffix(match, "CompletionSpec.cue") {
 				continue
 			}
 			specPaths = append(specPaths, match)

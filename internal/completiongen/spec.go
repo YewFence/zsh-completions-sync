@@ -1,10 +1,12 @@
 package completiongen
 
 import (
-	"encoding/json"
 	"fmt"
 	"os"
-	"os/exec"
+	"path/filepath"
+
+	"cuelang.org/go/cue"
+	"cuelang.org/go/cue/cuecontext"
 )
 
 type Spec struct {
@@ -44,19 +46,45 @@ type Argument struct {
 }
 
 func LoadSpec(path string) (Spec, error) {
-	command := exec.Command("pkl", "eval", "--color=never", "-f", "json", path)
-	command.Stderr = os.Stderr
-	output, err := command.Output()
+	schemaPath := filepath.Join(filepath.Dir(path), "CompletionSpec.cue")
+	schemaBytes, err := os.ReadFile(schemaPath)
 	if err != nil {
-		return Spec{}, fmt.Errorf("evaluate %s: %w", path, err)
+		return Spec{}, fmt.Errorf("read schema %s: %w", schemaPath, err)
+	}
+
+	ctx := cuecontext.New()
+
+	schemaValue := ctx.CompileString(string(schemaBytes), cue.Filename(schemaPath))
+	if err := schemaValue.Err(); err != nil {
+		return Spec{}, fmt.Errorf("compile schema %s: %w", schemaPath, err)
+	}
+
+	specSchema := schemaValue.LookupPath(cue.ParsePath("#Spec"))
+	if !specSchema.Exists() {
+		return Spec{}, fmt.Errorf("schema %s does not define #Spec", schemaPath)
+	}
+
+	specBytes, err := os.ReadFile(path)
+	if err != nil {
+		return Spec{}, fmt.Errorf("read spec %s: %w", path, err)
+	}
+
+	specValue := ctx.CompileString(string(specBytes), cue.Filename(path))
+	if err := specValue.Err(); err != nil {
+		return Spec{}, fmt.Errorf("compile spec %s: %w", path, err)
+	}
+
+	unified := specSchema.Unify(specValue)
+	if err := unified.Validate(cue.Concrete(true)); err != nil {
+		return Spec{}, fmt.Errorf("validate spec %s: %w", path, err)
 	}
 
 	var spec Spec
-	if err := json.Unmarshal(output, &spec); err != nil {
-		return Spec{}, fmt.Errorf("decode %s: %w", path, err)
+	if err := unified.Decode(&spec); err != nil {
+		return Spec{}, fmt.Errorf("decode spec %s: %w", path, err)
 	}
 	if err := validateSpec(spec); err != nil {
-		return Spec{}, fmt.Errorf("validate %s: %w", path, err)
+		return Spec{}, fmt.Errorf("validate spec %s: %w", path, err)
 	}
 	return spec, nil
 }
