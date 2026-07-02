@@ -29,6 +29,8 @@ script = 'eval "$(zcs init project)"'
 
 这段脚本会运行 `zcs generate --scope project`，把项目级补全写入当前目录的 `.completions/zsh`，并在进入目录时加载它。
 
+项目模式下生成的初始化片段会使用 `.completions/zsh/.zcompdump` 作为 `compinit` 缓存文件，避免把项目级补全写入全局 `.zcompdump`。
+
 如果你只想加载项目补全目录，不想在进入目录时自动生成，可以加上 `--no-sync`。
 
 ```toml
