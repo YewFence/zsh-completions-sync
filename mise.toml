@@ -101,6 +101,28 @@ run = "go run ./cmd/zcs-docs"
 description = "Generate maintained static zsh completion scripts from CUE specs"
 run = "go run ./cmd/zcs-completion-gen"
 
+[tasks.'completions:shell']
+description = "Open an interactive zsh with maintained completions loaded"
+interactive = true
+run = '''
+#!/usr/bin/env zsh
+set -euo pipefail
+
+export ZCS_COMPLETION_TEST_FPATH="$PWD/completions"
+zdotdir="$(mktemp -d "${TMPDIR:-/tmp}/zcs-completions-shell.XXXXXX")"
+trap 'rm -rf "$zdotdir"' EXIT
+
+{
+  print -r -- 'autoload -Uz compinit'
+  print -r -- 'fpath=("$ZCS_COMPLETION_TEST_FPATH" $fpath)'
+  print -r -- 'compinit -D'
+  print -r -- 'print -r -- "loaded completions from $ZCS_COMPLETION_TEST_FPATH"'
+  print -r -- 'print -r -- "try waydroid c<Tab>, then exit when done"'
+} > "$zdotdir/.zshrc"
+
+ZDOTDIR="$zdotdir" zsh -d -i
+'''
+
 [tasks.'docs:dev']
 description = "Start the VitePress documentation site"
 depends = ["cli:docs", "docs:install"]

@@ -40,7 +40,8 @@ command = ["aube", "completion", "zsh"]
 
 [tools.bun]
 scopes = ["project"]
-command = ["bun", "completion", "zsh"]
+env = { SHELL="zsh"}
+command = ["bun", "completions"]
 
 [tools.chezmoi]
 scopes = ["global"]

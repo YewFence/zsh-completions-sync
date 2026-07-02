@@ -25,12 +25,12 @@ _waydroid_system_types() {
 
 
 _waydroid_global_options=(
-  '(-h --help){-h,--help}[show help message and exit]'
-  '(-V --version){-V,--version}[show program version and exit]'
-  '(-l --log){-l,--log}[path to log file]:log file:_files'
+  '(-h --help)'{-h,--help}'[show help message and exit]'
+  '(-V --version)'{-V,--version}'[show program version and exit]'
+  '(-l --log)'{-l,--log}'[path to log file]:log file:_files'
   '--details-to-stdout[print details to stdout]'
-  '(-v --verbose){-v,--verbose}[write more to log files]'
-  '(-q --quiet){-q,--quiet}[do not output log messages]'
+  '(-v --verbose)'{-v,--verbose}'[write more to log files]'
+  '(-q --quiet)'{-q,--quiet}'[do not output log messages]'
 )
 
 
@@ -254,22 +254,22 @@ _waydroid() {
           ;;
         log)
           _arguments \
-            '(-n --lines){-n,--lines}[count of initial output lines]:lines:' \
-            '(-c --clear){-c,--clear}[clear the log]'
+            '(-n --lines)'{-n,--lines}'[count of initial output lines]:lines:' \
+            '(-c --clear)'{-c,--clear}'[clear the log]'
           ;;
         init)
           _arguments \
-            '(-i --images_path){-i,--images_path}[custom path to waydroid images]:images path:_files -/' \
-            '(-f --force){-f,--force}[re-initialize configs and images]' \
-            '(-c --system_channel){-c,--system_channel}[custom system channel]:system channel:' \
-            '(-v --vendor_channel){-v,--vendor_channel}[custom vendor channel]:vendor channel:' \
-            '(-r --rom_type){-r,--rom_type}[rom type]:rom type:_waydroid_rom_types' \
-            '(-s --system_type){-s,--system_type}[system type]:system type:_waydroid_system_types' \
+            '(-i --images_path)'{-i,--images_path}'[custom path to waydroid images]:images path:_files -/' \
+            '(-f --force)'{-f,--force}'[re-initialize configs and images]' \
+            '(-c --system_channel)'{-c,--system_channel}'[custom system channel]:system channel:' \
+            '(-v --vendor_channel)'{-v,--vendor_channel}'[custom vendor channel]:vendor channel:' \
+            '(-r --rom_type)'{-r,--rom_type}'[rom type]:rom type:_waydroid_rom_types' \
+            '(-s --system_type)'{-s,--system_type}'[system type]:system type:_waydroid_system_types' \
             '--client[run as user mode]'
           ;;
         upgrade)
           _arguments \
-            '(-o --offline){-o,--offline}[just for updating configs]'
+            '(-o --offline)'{-o,--offline}'[just for updating configs]'
           ;;
         session)
           _waydroid_session
@@ -289,12 +289,12 @@ _waydroid() {
           ;;
         shell)
           _arguments \
-            '(-u --uid){-u,--uid}[UID to run as]:uid:' \
-            '(-g --gid){-g,--gid}[GID to run as]:gid:' \
-            '(-s --context){-s,--context}[security context]:context:' \
-            '(-L --nolsm){-L,--nolsm}[do not perform security domain transition]' \
-            '(-C --allcaps){-C,--allcaps}[do not drop capabilities]' \
-            '(-G --nocgroup){-G,--nocgroup}[do not switch to the container cgroup]' \
+            '(-u --uid)'{-u,--uid}'[UID to run as]:uid:' \
+            '(-g --gid)'{-g,--gid}'[GID to run as]:gid:' \
+            '(-s --context)'{-s,--context}'[security context]:context:' \
+            '(-L --nolsm)'{-L,--nolsm}'[do not perform security domain transition]' \
+            '(-C --allcaps)'{-C,--allcaps}'[do not drop capabilities]' \
+            '(-G --nocgroup)'{-G,--nocgroup}'[do not switch to the container cgroup]' \
             '*:command:'
           ;;
         logcat)

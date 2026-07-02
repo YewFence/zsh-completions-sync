@@ -252,24 +252,26 @@ func (builder modelBuilder) collectOptions(groups []string, options []Option) []
 
 func (builder modelBuilder) optionSpec(option Option) string {
 	flags := option.Flags
-	prefix := ""
-	if len(flags) > 1 {
-		prefix = "(" + strings.Join(flags, " ") + ")"
+	description := "[" + escapeZshDescription(option.Description) + "]"
+	argument := optionArgumentSpec(option, builder.completionExpression(option.Completion))
+
+	if len(flags) == 1 {
+		flagSpec := flags[0]
+		if strings.HasPrefix(flags[0], "--") && option.Argument != "" {
+			flagSpec = flags[0] + "="
+		}
+		return shellSingleQuote(flagSpec + description + argument)
 	}
 
-	flagSpec := strings.Join(flags, "")
-	if len(flags) == 1 && strings.HasPrefix(flags[0], "--") && option.Argument != "" {
-		flagSpec = flags[0] + "="
-	}
-	if len(flags) == 2 {
-		flagSpec = "{" + flags[0] + "," + flags[1] + "}"
-	}
+	prefix := "(" + strings.Join(flags, " ") + ")"
+	return shellSingleQuote(prefix) + zshBraceExpansion(flags) + shellSingleQuote(description+argument)
+}
 
-	spec := prefix + flagSpec + "[" + escapeZshDescription(option.Description) + "]"
-	if option.Argument != "" {
-		spec += ":" + escapeZshDescription(option.Argument) + ":" + builder.completionExpression(option.Completion)
+func optionArgumentSpec(option Option, completion string) string {
+	if option.Argument == "" {
+		return ""
 	}
-	return shellSingleQuote(spec)
+	return ":" + escapeZshDescription(option.Argument) + ":" + completion
 }
 
 func (builder modelBuilder) argumentSpec(position int, argument Argument) string {
@@ -350,6 +352,10 @@ func shellWord(value string) string {
 
 func shellSingleQuote(value string) string {
 	return "'" + strings.ReplaceAll(value, "'", "'\\''") + "'"
+}
+
+func zshBraceExpansion(values []string) string {
+	return "{" + strings.Join(values, ",") + "}"
 }
 
 func escapeZshDescription(value string) string {
