@@ -1,0 +1,410 @@
+#compdef qmd
+
+# Copyright (c) 2026 YewFence
+# Generated from completion-spec/qmd.cue; do not edit by hand.
+
+_qmd_collections() {
+  local -a collections
+  collections=(${(f)"$(_call_program qmd-collections qmd collection list 2>/dev/null | awk 'NF { print $1 }')"})
+  _describe -t collections 'collection' collections
+}
+
+
+_qmd_chunk_strategies() {
+  local -a values
+  values=(
+    'regex:regex-based chunking'
+    'auto:AST-aware chunking for supported code files'
+  )
+  _describe -t chunk-strategies 'chunk-strategy' values
+}
+
+_qmd_output_formats() {
+  local -a values
+  values=(
+    'cli:colorized command-line output'
+    'json:JSON output'
+    'csv:CSV output'
+    'md:Markdown output'
+    'xml:XML output'
+    'files:docid, score, file path, and context'
+  )
+  _describe -t output-formats 'output-format' values
+}
+
+
+_qmd_global_options=(
+  '(-h --help)'{-h,--help}'[show help]'
+  '(-v --version)'{-v,--version}'[show version]'
+  '--index=[use named index]:index name:'
+  '--no-gpu[force CPU mode]'
+  '--skill[print the QMD skill]'
+)
+
+_qmd_get_options=(
+  '(-l --lines)'{-l,--lines=}'[maximum lines to return]:lines:'
+  '--from=[start line]:line:'
+  '--no-line-numbers[disable line numbers]'
+  '--full-path[emit filesystem paths instead of qmd URIs]'
+)
+
+_qmd_multi_get_options=(
+  '(-l --lines)'{-l,--lines=}'[maximum lines per file]:lines:'
+  '--max-bytes=[skip files larger than bytes]:bytes:'
+  '--no-line-numbers[disable line numbers]'
+  '--full-path[emit filesystem paths instead of qmd URIs]'
+  '--format=[output format]:format:_qmd_output_formats'
+  '--json[JSON output]'
+  '--csv[CSV output]'
+  '--md[Markdown output]'
+  '--xml[XML output]'
+  '--files[files output]'
+)
+
+_qmd_search_options=(
+  '(-n --number)'{-n,--number=}'[number of results]:number:'
+  '(-c --collection)'{-c,--collection=}'[restrict to collection]:collection:_qmd_collections'
+  '--all[return all matches]'
+  '--min-score=[minimum score threshold]:score:'
+  '--full[show full document content]'
+  '--line-numbers[add line numbers to output]'
+  '--explain[include retrieval score traces]'
+  '--intent=[disambiguation context]:intent:'
+  '--no-rerank[skip LLM reranking]'
+  '(-C --candidate-limit)'{-C,--candidate-limit=}'[maximum candidates to rerank]:number:'
+  '--chunk-strategy=[chunk selection strategy]:strategy:_qmd_chunk_strategies'
+  '--full-path[emit filesystem paths instead of qmd URIs]'
+  '--format=[output format]:format:_qmd_output_formats'
+  '--json[JSON output]'
+  '--csv[CSV output]'
+  '--md[Markdown output]'
+  '--xml[XML output]'
+  '--files[files output]'
+)
+
+
+_qmd_collection() {
+  local context state state_descr line curcontext="$curcontext"
+  typeset -A opt_args
+
+  local -a subcommands
+  subcommands=(
+    'list:list all collections'
+    'add:add a collection'
+    'remove:remove a collection'
+    'rm:remove a collection'
+    'rename:rename a collection'
+    'mv:rename a collection'
+    'show:show collection details'
+    'info:show collection details'
+    'update-cmd:set pre-update command'
+    'set-update:set pre-update command'
+    'include:include collection in default queries'
+    'exclude:exclude collection from default queries'
+    'help:show collection help'
+  )
+
+  _arguments -C \
+    $_qmd_global_options \
+    '2:command:->command' \
+    '*::arg:->arg'
+
+  case $state in
+    command)
+      _describe -t commands 'collection command' subcommands
+      ;;
+    arg)
+      case $line[2] in
+        list)
+          ;;
+        add)
+          _arguments \
+            '--name=[collection name]:name:' \
+            '--mask=[glob pattern]:glob pattern:' \
+            '3:directory:_files -/'
+          ;;
+        remove|rm)
+          _arguments \
+            '3:collection:_qmd_collections' \
+            '*:command word:'
+          ;;
+        rename|mv)
+          _arguments \
+            '3:old collection:_qmd_collections' \
+            '4:new collection name:'
+          ;;
+        show|info)
+          _arguments \
+            '3:collection:_qmd_collections' \
+            '*:command word:'
+          ;;
+        update-cmd|set-update)
+          _arguments \
+            '3:collection:_qmd_collections' \
+            '*:command word:'
+          ;;
+        include)
+          _arguments \
+            '3:collection:_qmd_collections' \
+            '*:command word:'
+          ;;
+        exclude)
+          _arguments \
+            '3:collection:_qmd_collections' \
+            '*:command word:'
+          ;;
+        help)
+          ;;
+      esac
+      ;;
+  esac
+}
+
+_qmd_context() {
+  local context state state_descr line curcontext="$curcontext"
+  typeset -A opt_args
+
+  local -a subcommands
+  subcommands=(
+    'add:add context'
+    'list:list contexts'
+    'rm:remove context'
+    'remove:remove context'
+    'check:check paths missing context'
+  )
+
+  _arguments -C \
+    $_qmd_global_options \
+    '2:command:->command' \
+    '*::arg:->arg'
+
+  case $state in
+    command)
+      _describe -t commands 'context command' subcommands
+      ;;
+    arg)
+      case $line[2] in
+        add)
+          _arguments \
+            '*:path:_alternative '\''qmd-paths:qmd path:_guard "qmd://*" "qmd path"'\'' '\''files:file:_files'\'''
+          ;;
+        list)
+          ;;
+        rm|remove)
+          _arguments \
+            '*:path:_alternative '\''qmd-paths:qmd path:_guard "qmd://*" "qmd path"'\'' '\''files:file:_files'\'''
+          ;;
+        check)
+          ;;
+      esac
+      ;;
+  esac
+}
+
+_qmd_mcp() {
+  local context state state_descr line curcontext="$curcontext"
+  typeset -A opt_args
+
+  local -a subcommands
+  subcommands=(
+    'stop:stop background MCP daemon'
+    'status:show MCP daemon status'
+  )
+
+  _arguments -C \
+    $_qmd_global_options \
+    '--http[start MCP server with HTTP transport]' \
+    '--daemon[start as background daemon]' \
+    '--port=[HTTP port]:port:' \
+    '--host=[HTTP bind host]:host:_hosts' \
+    '2:command:->command' \
+    '*::arg:->arg'
+
+  case $state in
+    command)
+      _describe -t commands 'mcp command' subcommands
+      ;;
+    arg)
+      case $line[2] in
+        stop)
+          ;;
+        status)
+          ;;
+      esac
+      ;;
+  esac
+}
+
+_qmd_skill() {
+  local context state state_descr line curcontext="$curcontext"
+  typeset -A opt_args
+
+  local -a subcommands
+  subcommands=(
+    'show:print the QMD skill'
+    'install:install QMD skill'
+    'help:show skill help'
+  )
+
+  _arguments -C \
+    $_qmd_global_options \
+    '2:command:->command' \
+    '*::arg:->arg'
+
+  case $state in
+    command)
+      _describe -t commands 'skill command' subcommands
+      ;;
+    arg)
+      case $line[2] in
+        show)
+          ;;
+        install)
+          _arguments \
+            '--global[install into global skills directory]' \
+            '--yes[also create Claude skill symlink]' \
+            '(-f --force)'{-f,--force}'[replace existing install or symlink]'
+          ;;
+        help)
+          ;;
+      esac
+      ;;
+  esac
+}
+
+_qmd() {
+  local context state state_descr line curcontext="$curcontext"
+  typeset -A opt_args
+
+  local -a commands
+  commands=(
+    'init:initialize a project-local index'
+    'collection:manage collections'
+    'context:manage search context'
+    'ls:list collections or files'
+    'get:get a document by path or docid'
+    'multi-get:get multiple documents by glob or list'
+    'status:show index status'
+    'doctor:diagnose the install'
+    'update:re-index collections'
+    'embed:generate vector embeddings'
+    'pull:pull local models'
+    'search:full-text keyword search'
+    'vsearch:vector similarity search'
+    'vector-search:vector similarity search'
+    'query:hybrid search with expansion and reranking'
+    'deep-search:hybrid search with expansion and reranking'
+    'bench:run search quality benchmarks'
+    'mcp:start MCP server'
+    'skills:list QMD skills'
+    'skill:show or install the QMD skill'
+    'cleanup:clean cache and orphaned data'
+  )
+
+  _arguments -C \
+    $_qmd_global_options \
+    '1:command:->command' \
+    '*::arg:->arg'
+
+  case $state in
+    command)
+      _describe -t commands 'qmd command' commands
+      ;;
+    arg)
+      curcontext="${curcontext%:*:*}:qmd-$line[1]:"
+      case $line[1] in
+        init)
+          ;;
+        collection)
+          _qmd_collection
+          ;;
+        context)
+          _qmd_context
+          ;;
+        ls)
+          _arguments \
+            '2:collection or qmd path:_alternative '\''collections:collection:_qmd_collections'\'' '\''qmd-paths:qmd path:_guard "qmd://*" "qmd path"'\'''
+          ;;
+        get)
+          _arguments \
+            $_qmd_get_options \
+            '2:file or docid:_files'
+          ;;
+        multi-get)
+          _arguments \
+            $_qmd_multi_get_options \
+            '2:glob, list, or docid:_files'
+          ;;
+        status)
+          ;;
+        doctor)
+          ;;
+        update)
+          _arguments \
+            '--pull[run collection pre-update commands before indexing]'
+          ;;
+        embed)
+          _arguments \
+            '(-f --force)'{-f,--force}'[re-embed everything]' \
+            '(-c --collection)'{-c,--collection=}'[embed collection]:collection:_qmd_collections' \
+            '--chunk-strategy=[chunk strategy]:strategy:_qmd_chunk_strategies' \
+            '--max-docs-per-batch=[maximum docs per batch]:number:' \
+            '--max-batch-mb=[maximum batch size in MB]:megabytes:' \
+            '--timeout=[maximum duration]:duration:'
+          ;;
+        pull)
+          _arguments \
+            '--refresh[refresh cached model metadata]'
+          ;;
+        search)
+          _arguments \
+            $_qmd_search_options \
+            '*:query:'
+          ;;
+        vsearch)
+          _arguments \
+            $_qmd_search_options \
+            '*:query:'
+          ;;
+        vector-search)
+          _arguments \
+            $_qmd_search_options \
+            '*:query:'
+          ;;
+        query)
+          _arguments \
+            $_qmd_search_options \
+            '*:query:'
+          ;;
+        deep-search)
+          _arguments \
+            $_qmd_search_options \
+            '*:query:'
+          ;;
+        bench)
+          _arguments \
+            '(-c --collection)'{-c,--collection=}'[benchmark collection]:collection:_qmd_collections' \
+            '--json[JSON output]' \
+            '2:fixture JSON:_files -g "*.json(-.)"'
+          ;;
+        mcp)
+          _qmd_mcp
+          ;;
+        skills)
+          _arguments \
+            '--json[JSON output]' \
+            '--full[include full skill content]' \
+            '--all[include all skills]' \
+            '*:skill name:'
+          ;;
+        skill)
+          _qmd_skill
+          ;;
+        cleanup)
+          ;;
+      esac
+      ;;
+  esac
+}
+
+_qmd "$@"

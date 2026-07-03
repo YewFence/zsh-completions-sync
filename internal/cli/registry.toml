@@ -40,7 +40,8 @@ command = ["aube", "completion", "zsh"]
 
 [tools.bun]
 scopes = ["project"]
-command = ["bun", "completion", "zsh"]
+env = { SHELL="zsh"}
+command = ["bun", "completions"]
 
 [tools.chezmoi]
 scopes = ["global"]
@@ -74,3 +75,19 @@ command = ["zcs", "completion", "zsh"]
 [tools.rmux]
 scopes = ["global"]
 file = { git = "https://github.com/YewFence/zsh-completions-sync.git", path = "completions/_rmux", ref = "main" }
+
+[tools.qmd]
+scopes = ["global"]
+file = { git = "https://github.com/YewFence/zsh-completions-sync.git", path = "completions/_qmd", ref = "main" }
+
+[tools.waydroid]
+scopes = ["global"]
+file = { git = "https://github.com/YewFence/zsh-completions-sync.git", path = "completions/_waydroid", ref = "main" }
+
+[tools.sem]
+scopes = ["global"]
+command = ["sem", "completions", "zsh"]
+
+[tools.rip]
+scopes = ["global"]
+command = ["rip", "completions", "zsh"]

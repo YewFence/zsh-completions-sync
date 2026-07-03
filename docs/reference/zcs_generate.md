@@ -28,4 +28,3 @@ zcs generate [tool...] [flags]
 ### SEE ALSO
 
 * [zcs](zcs)	 - Synchronize zsh completion scripts
-

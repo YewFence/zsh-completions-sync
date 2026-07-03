@@ -29,7 +29,11 @@ func writeInitScript(options InitOptions, stdout io.Writer) error {
 		snippets = append(snippets, "init-snippets/global-fpath.zsh")
 	}
 	if options.Compinit {
-		snippets = append(snippets, "init-snippets/compinit.zsh")
+		if options.Project {
+			snippets = append(snippets, "init-snippets/project-compinit.zsh")
+		} else {
+			snippets = append(snippets, "init-snippets/compinit.zsh")
+		}
 	}
 
 	return writeInitSnippets(snippets, stdout)

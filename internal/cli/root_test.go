@@ -613,6 +613,9 @@ func TestInitGlobalCommandDefaultsToGlobalOnly(t *testing.T) {
 	if !strings.Contains(output, "ZCS_GLOBAL_OUTPUT_DIR") || !strings.Contains(output, "$HOME/.zsh/completions") || !strings.Contains(output, "compinit") {
 		t.Fatalf("unexpected output: %q", output)
 	}
+	if strings.Contains(output, ".zcompdump") {
+		t.Fatalf("global init should use default compinit cache: %q", output)
+	}
 }
 
 func TestInitProjectCommandSupportsNoFlags(t *testing.T) {
@@ -628,6 +631,22 @@ func TestInitProjectCommandSupportsNoFlags(t *testing.T) {
 	}
 	if !strings.Contains(output, "$PWD/.completions/zsh") || !strings.Contains(output, "$HOME/.zsh/completions") {
 		t.Fatalf("unexpected output: %q", output)
+	}
+}
+
+func TestInitProjectCommandUsesProjectCompinitDump(t *testing.T) {
+	buffer := new(bytes.Buffer)
+	command := newTestRootCommand(buffer, "init", "project", "--no-sync")
+	if err := command.Execute(); err != nil {
+		t.Fatalf("execute init project command: %v", err)
+	}
+
+	output := buffer.String()
+	if !strings.Contains(output, `compinit -d "$_zcs_project_compdump"`) || !strings.Contains(output, `$PWD/.completions/zsh/.zcompdump`) {
+		t.Fatalf("project compinit dump missing: %q", output)
+	}
+	if strings.Contains(output, "zcs generate --scope project") {
+		t.Fatalf("project sync command should be disabled: %q", output)
 	}
 }
 
