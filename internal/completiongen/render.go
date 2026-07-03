@@ -252,6 +252,10 @@ func (builder modelBuilder) collectOptions(groups []string, options []Option) []
 
 func (builder modelBuilder) optionSpec(option Option) string {
 	flags := option.Flags
+	prefix := ""
+	if option.Repeatable {
+		prefix = "*"
+	}
 	description := "[" + escapeZshDescription(option.Description) + "]"
 	argument := optionArgumentSpec(option, builder.completionExpression(option.Completion))
 
@@ -260,11 +264,11 @@ func (builder modelBuilder) optionSpec(option Option) string {
 		if strings.HasPrefix(flags[0], "--") && option.Argument != "" {
 			flagSpec = flags[0] + "="
 		}
-		return shellSingleQuote(flagSpec + description + argument)
+		return shellSingleQuote(prefix + flagSpec + description + argument)
 	}
 
-	prefix := "(" + strings.Join(flags, " ") + ")"
-	return shellSingleQuote(prefix) + zshBraceExpansion(flags) + shellSingleQuote(description+argument)
+	flagPrefix := "(" + strings.Join(flags, " ") + ")"
+	return shellSingleQuote(prefix+flagPrefix) + zshBraceExpansion(flags) + shellSingleQuote(description+argument)
 }
 
 func optionArgumentSpec(option Option, completion string) string {
