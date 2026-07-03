@@ -1,5 +1,7 @@
 package qmd
 
+import "list"
+
 let outputFormats = [
 	"cli:colorized command-line output",
 	"json:JSON output",
@@ -7,6 +9,20 @@ let outputFormats = [
 	"md:Markdown output",
 	"xml:XML output",
 	"files:docid, score, file path, and context",
+]
+
+let outputFormatOptions = [
+	{
+		flags: ["--format"]
+		description: "output format"
+		argument:    "format"
+		completion:  "value:output-formats"
+	},
+	{flags: ["--json"], description: "JSON output"},
+	{flags: ["--csv"], description: "CSV output"},
+	{flags: ["--md"], description: "Markdown output"},
+	{flags: ["--xml"], description: "XML output"},
+	{flags: ["--files"], description: "files output"},
 ]
 
 let chunkStrategies = [
@@ -45,60 +61,52 @@ optionGroups: {
 		{flags: ["--skill"], description: "print the QMD skill"},
 	]
 
-	search: [
-		{
-			flags: ["-n", "--number"]
-			description: "number of results"
-			argument:    "number"
-		},
-		{
-			flags: ["-c", "--collection"]
-			description: "restrict to collection"
-			argument:    "collection"
-			completion:  "_qmd_collections"
-		},
-		{flags: ["--all"], description: "return all matches"},
-		{
-			flags: ["--min-score"]
-			description: "minimum score threshold"
-			argument:    "score"
-		},
-		{flags: ["--full"], description: "show full document content"},
-		{flags: ["--line-numbers"], description: "add line numbers to output"},
-		{flags: ["--explain"], description: "include retrieval score traces"},
-		{
-			flags: ["--intent"]
-			description: "disambiguation context"
-			argument:    "intent"
-		},
-		{flags: ["--no-rerank"], description: "skip LLM reranking"},
-		{
-			flags: ["-C", "--candidate-limit"]
-			description: "maximum candidates to rerank"
-			argument:    "number"
-		},
-		{
-			flags: ["--chunk-strategy"]
-			description: "chunk selection strategy"
-			argument:    "strategy"
-			completion:  "value:chunk-strategies"
-		},
-		{
-			flags: ["--full-path"]
-			description: "emit filesystem paths instead of qmd URIs"
-		},
-		{
-			flags: ["--format"]
-			description: "output format"
-			argument:    "format"
-			completion:  "value:output-formats"
-		},
-		{flags: ["--json"], description: "JSON output"},
-		{flags: ["--csv"], description: "CSV output"},
-		{flags: ["--md"], description: "Markdown output"},
-		{flags: ["--xml"], description: "XML output"},
-		{flags: ["--files"], description: "files output"},
-	]
+	search: list.Concat([
+		[
+			{
+				flags: ["-n", "--number"]
+				description: "number of results"
+				argument:    "number"
+			},
+			{
+				flags: ["-c", "--collection"]
+				description: "restrict to collection"
+				argument:    "collection"
+				completion:  "_qmd_collections"
+			},
+			{flags: ["--all"], description: "return all matches"},
+			{
+				flags: ["--min-score"]
+				description: "minimum score threshold"
+				argument:    "score"
+			},
+			{flags: ["--full"], description: "show full document content"},
+			{flags: ["--line-numbers"], description: "add line numbers to output"},
+			{flags: ["--explain"], description: "include retrieval score traces"},
+			{
+				flags: ["--intent"]
+				description: "disambiguation context"
+				argument:    "intent"
+			},
+			{flags: ["--no-rerank"], description: "skip LLM reranking"},
+			{
+				flags: ["-C", "--candidate-limit"]
+				description: "maximum candidates to rerank"
+				argument:    "number"
+			},
+			{
+				flags: ["--chunk-strategy"]
+				description: "chunk selection strategy"
+				argument:    "strategy"
+				completion:  "value:chunk-strategies"
+			},
+			{
+				flags: ["--full-path"]
+				description: "emit filesystem paths instead of qmd URIs"
+			},
+		],
+		outputFormatOptions,
+	])
 
 	get: [
 		{
@@ -114,34 +122,26 @@ optionGroups: {
 		},
 	]
 
-	"multi-get": [
-		{
-			flags: ["-l", "--lines"]
-			description: "maximum lines per file"
-			argument:    "lines"
-		},
-		{
-			flags: ["--max-bytes"]
-			description: "skip files larger than bytes"
-			argument:    "bytes"
-		},
-		{flags: ["--no-line-numbers"], description: "disable line numbers"},
-		{
-			flags: ["--full-path"]
-			description: "emit filesystem paths instead of qmd URIs"
-		},
-		{
-			flags: ["--format"]
-			description: "output format"
-			argument:    "format"
-			completion:  "value:output-formats"
-		},
-		{flags: ["--json"], description: "JSON output"},
-		{flags: ["--csv"], description: "CSV output"},
-		{flags: ["--md"], description: "Markdown output"},
-		{flags: ["--xml"], description: "XML output"},
-		{flags: ["--files"], description: "files output"},
-	]
+	"multi-get": list.Concat([
+		[
+			{
+				flags: ["-l", "--lines"]
+				description: "maximum lines per file"
+				argument:    "lines"
+			},
+			{
+				flags: ["--max-bytes"]
+				description: "skip files larger than bytes"
+				argument:    "bytes"
+			},
+			{flags: ["--no-line-numbers"], description: "disable line numbers"},
+			{
+				flags: ["--full-path"]
+				description: "emit filesystem paths instead of qmd URIs"
+			},
+		],
+		outputFormatOptions,
+	])
 }
 
 globalOptionGroups: ["global"]

@@ -28,7 +28,7 @@ func TestRenderZshOptionSpecs(t *testing.T) {
 
 	content := string(output)
 	assertContains(t, content, "'(-h --help)'{-h,--help}'[show help]'")
-	assertContains(t, content, "'(-o --output)'{-o,--output}'[write output]:file:_files'")
+	assertContains(t, content, "'(-o --output)'{-o,--output=}'[write output]:file:_files'")
 	assertContains(t, content, "'--config=[read config]:file:_files'")
 	assertContains(t, content, "'*--tag=[add tag]:tag:_values tags alpha beta'")
 	assertContains(t, content, "'*(-v --verbose)'{-v,--verbose}'[increase verbosity]'")

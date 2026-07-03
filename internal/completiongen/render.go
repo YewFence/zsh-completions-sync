@@ -269,6 +269,7 @@ func (builder modelBuilder) collectOptions(groups []string, options []Option) []
 
 func (builder modelBuilder) optionSpec(option Option) string {
 	flags := option.Flags
+	hasArgument := option.Argument != ""
 	prefix := ""
 	if option.Repeatable {
 		prefix = "*"
@@ -277,15 +278,23 @@ func (builder modelBuilder) optionSpec(option Option) string {
 	argument := optionArgumentSpec(option, builder.completionExpression(option.Completion))
 
 	if len(flags) == 1 {
-		flagSpec := flags[0]
-		if strings.HasPrefix(flags[0], "--") && option.Argument != "" {
-			flagSpec = flags[0] + "="
-		}
+		flagSpec := optionFlagSpec(flags[0], hasArgument)
 		return shellSingleQuote(prefix + flagSpec + description + argument)
 	}
 
+	flagSpecs := make([]string, 0, len(flags))
+	for _, flag := range flags {
+		flagSpecs = append(flagSpecs, optionFlagSpec(flag, hasArgument))
+	}
 	flagPrefix := "(" + strings.Join(flags, " ") + ")"
-	return shellSingleQuote(prefix+flagPrefix) + zshBraceExpansion(flags) + shellSingleQuote(description+argument)
+	return shellSingleQuote(prefix+flagPrefix) + zshBraceExpansion(flagSpecs) + shellSingleQuote(description+argument)
+}
+
+func optionFlagSpec(flag string, hasArgument bool) string {
+	if strings.HasPrefix(flag, "--") && hasArgument {
+		return flag + "="
+	}
+	return flag
 }
 
 func optionArgumentSpec(option Option, completion string) string {

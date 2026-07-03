@@ -42,14 +42,14 @@ _qmd_global_options=(
 )
 
 _qmd_get_options=(
-  '(-l --lines)'{-l,--lines}'[maximum lines to return]:lines:'
+  '(-l --lines)'{-l,--lines=}'[maximum lines to return]:lines:'
   '--from=[start line]:line:'
   '--no-line-numbers[disable line numbers]'
   '--full-path[emit filesystem paths instead of qmd URIs]'
 )
 
 _qmd_multi_get_options=(
-  '(-l --lines)'{-l,--lines}'[maximum lines per file]:lines:'
+  '(-l --lines)'{-l,--lines=}'[maximum lines per file]:lines:'
   '--max-bytes=[skip files larger than bytes]:bytes:'
   '--no-line-numbers[disable line numbers]'
   '--full-path[emit filesystem paths instead of qmd URIs]'
@@ -62,8 +62,8 @@ _qmd_multi_get_options=(
 )
 
 _qmd_search_options=(
-  '(-n --number)'{-n,--number}'[number of results]:number:'
-  '(-c --collection)'{-c,--collection}'[restrict to collection]:collection:_qmd_collections'
+  '(-n --number)'{-n,--number=}'[number of results]:number:'
+  '(-c --collection)'{-c,--collection=}'[restrict to collection]:collection:_qmd_collections'
   '--all[return all matches]'
   '--min-score=[minimum score threshold]:score:'
   '--full[show full document content]'
@@ -71,7 +71,7 @@ _qmd_search_options=(
   '--explain[include retrieval score traces]'
   '--intent=[disambiguation context]:intent:'
   '--no-rerank[skip LLM reranking]'
-  '(-C --candidate-limit)'{-C,--candidate-limit}'[maximum candidates to rerank]:number:'
+  '(-C --candidate-limit)'{-C,--candidate-limit=}'[maximum candidates to rerank]:number:'
   '--chunk-strategy=[chunk selection strategy]:strategy:_qmd_chunk_strategies'
   '--full-path[emit filesystem paths instead of qmd URIs]'
   '--format=[output format]:format:_qmd_output_formats'
@@ -346,7 +346,7 @@ _qmd() {
         embed)
           _arguments \
             '(-f --force)'{-f,--force}'[re-embed everything]' \
-            '(-c --collection)'{-c,--collection}'[embed collection]:collection:_qmd_collections' \
+            '(-c --collection)'{-c,--collection=}'[embed collection]:collection:_qmd_collections' \
             '--chunk-strategy=[chunk strategy]:strategy:_qmd_chunk_strategies' \
             '--max-docs-per-batch=[maximum docs per batch]:number:' \
             '--max-batch-mb=[maximum batch size in MB]:megabytes:' \
@@ -383,7 +383,7 @@ _qmd() {
           ;;
         bench)
           _arguments \
-            '(-c --collection)'{-c,--collection}'[benchmark collection]:collection:_qmd_collections' \
+            '(-c --collection)'{-c,--collection=}'[benchmark collection]:collection:_qmd_collections' \
             '--json[JSON output]' \
             '2:fixture JSON:_files -g "*.json(-.)"'
           ;;
