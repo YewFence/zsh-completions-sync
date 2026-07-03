@@ -25,4 +25,3 @@ zcs version [flags]
 ### SEE ALSO
 
 * [zcs](zcs)	 - Synchronize zsh completion scripts
-

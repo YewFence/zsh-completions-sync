@@ -1,30 +1,30 @@
-amends "package://github.com/jdx/hk/releases/download/v1.48.0/hk@1.48.0#/Config.pkl"
-import "package://github.com/jdx/hk/releases/download/v1.48.0/hk@1.48.0#/Builtins.pkl"
+amends "package://github.com/jdx/hk/releases/download/v1.45.0/hk@1.45.0#/Config.pkl"
+import "package://github.com/jdx/hk/releases/download/v1.45.0/hk@1.45.0#/Builtins.pkl"
 
 local linters = new Mapping<String, Step> {
-    ["completions:gen"] {
-        glob = List("*")
-        fix = "mise run completions:gen"
-    }
-    ["check"] {
-        glob = List("*")
-        depends = "completions:gen"
-        check = "mise run check"
-    }
+  ["completions:gen"] {
+      glob = List("*")
+      fix = "mise run completions:gen"
+  }
+  ["lint"] {
+    fix = "mise run fix"
+    check = "mise run check"
+    check_first = true
+  }
+  // This step don't contain autofix
+  ["large-file"] = Builtins.check_added_large_files
 }
 
 hooks {
-    ["pre-commit"] {
-        fix = true
-        stage = true
-        stash = "git"
-        steps = linters
-    }
-    ["fix"] {
-        fix = true
-        steps = linters
-    }
-    ["check"] {
-        steps = linters
-    }
+  ["pre-commit"] {
+    fix = true
+    stage = true
+    stash = "git"
+    steps = linters
+  }
+  ["check"] {
+    stage = true
+    stash = "git"
+    steps = linters
+  }
 }

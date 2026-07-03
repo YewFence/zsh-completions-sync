@@ -26,4 +26,3 @@ zcs init global [flags]
 ### SEE ALSO
 
 * [zcs init](zcs_init)	 - Print a zsh initialization snippet.
-

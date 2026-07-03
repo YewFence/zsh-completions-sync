@@ -24,4 +24,3 @@ Synchronize zsh completion scripts into global and project-local completion dire
 * [zcs init](zcs_init)	 - Print a zsh initialization snippet.
 * [zcs list](zcs_list)	 - List configured completion tools.
 * [zcs version](zcs_version)	 - Print version information
-

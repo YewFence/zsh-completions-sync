@@ -1,41 +1,45 @@
 [settings]
 lockfile = true
+env_shell_expand = true
+minimum_release_age = "3d"
 
 [tools]
 # https://go.dev/
 go = "1"
 # https://nodejs.org/
 node = "26"
-# https://github.com/azat-io/actions-up
-"npm:actions-up" = "1"
-# https://github.com/paulhatch/semantic-version
-"npm:@semanticversion/cli" = "latest"
 # https://pnpm.io/
 pnpm = "11"
 # https://golangci-lint.run/
 golangci-lint = "2"
-pkl = "latest"
+# https://github.com/suzuki-shunsuke/nllint
+"go:github.com/suzuki-shunsuke/nllint/cmd/nllint" = "1"
+# https://github.com/suzuki-shunsuke/pinact
+pinact = "4"
+# https://github.com/crate-ci/typos
+typos = "1"
+betterleaks = "1"
+actionlint = "1"
+git-cliff = "latest"
 hk = "latest"
 cue = "latest"
 
 [env]
+# the minimum release age of github actions in days
+PINACT_MIN_AGE = "3"
+PINACT_GITHUB_TOKEN = { value = "${MISE_GITHUB_TOKEN:-}", redact = true }
 
 [env._]
 path = ["./bin", "${GOBIN:-}"]
-
-[tasks.tidy]
+[tasks."mod:tidy"]
 description = "Tidy Go module dependencies"
 run = "go mod tidy"
 
-[tasks.'tidy:check']
+[tasks."mod:tidy:check"]
 description = "Check whether Go module dependencies are tidy"
-run = "go mod tidy && git diff --exit-code go.mod go.sum"
+run = "go mod tidy -diff"
 
-[tasks.'mod:verify']
-description = "Verify Go module dependencies"
-run = "go mod verify"
-
-[tasks.update]
+[tasks."deps:update"]
 description = "Update Go dependencies and tidy modules"
 run = "go get -u ./... && go mod tidy"
 
@@ -43,29 +47,59 @@ run = "go get -u ./... && go mod tidy"
 description = "Run Go tests"
 run = "go test -v ./..."
 
-[tasks.fmt]
+[tasks."fmt:check"]
 description = "Check Go code formatting"
 raw = true
 run = "golangci-lint fmt -E gofmt --diff"
 
-[tasks.vet]
-description = "Run Go static checks"
+[tasks."fmt:fix"]
+description = "Fix Go code formatting"
 raw = true
-run = "go vet ./..."
+run = "golangci-lint fmt -E gofmt"
 
 [tasks.lint]
 description = "Run Go lint checks"
 raw = true
-run = "golangci-lint run"
+run = "golangci-lint run -E asciicheck"
+
+[tasks."leaks:check"]
+description = "Run betterleaks checks"
+run = "betterleaks git --redact --no-banner"
+
+[tasks."typos:check"]
+description = "Run Typos Lint"
+run = "typos"
+
+[tasks."typos:fix"]
+description = "Fix Typos Lint"
+run = "typos --write-changes"
+
+[tasks."newline:fix"]
+description = "Fix Newline Lint issues"
+run = "git ls-files | xargs nllint --fix --trim-space"
+
+[tasks."newline:check"]
+description = "Check Newline Lint issues"
+run = "git ls-files | xargs nllint --trim-space"
 
 [tasks.check]
-description = "Run Go formatting checks, static checks, build, and lint"
-depends = ["fmt", "tidy:check"]
+description = """
+Run read-only checks for Go modules, newlines, typos, formatting, GitHub Actions, lint, build, and tests"""
 run = [
-  { task = "vet" },
-  { task = "build" },
+  { tasks = [ "mod:tidy:check", "newline:check", "typos:check", "build:check" ] },
+  { task = "leaks:check" },
+  { task = "actions:check" },
   { task = "lint" },
-  { task = "test"},
+  { task = "test" }
+]
+
+[tasks.fix]
+description = "Fix Go modules, newlines, typos, and formatting"
+run = [
+  { task = "mod:tidy" },
+  { task = "newline:fix" },
+  { task = "typos:fix" },
+  { task = "fmt:fix" }
 ]
 
 [tasks.cli]
@@ -80,13 +114,22 @@ run = 'go install -trimpath -ldflags="-X main.version=${BUILD_VERSION:-dev}" ./c
 description = "Build the CLI executable"
 run = 'go build -trimpath -ldflags="-s -w -X main.version=${BUILD_VERSION:-dev}" -o "${BUILD_OUTPUT_DIR:-bin}/" ./cmd/zcs'
 
-[tasks.'action:update']
-description = "Interactively update GitHub Action versions and pin to commit hashes by default"
-run = "actions-up"
+[tasks."build:check"]
+description = "Check whether the CLI builds"
+run = "go test -run '^$' ./cmd/..."
 
-[tasks.'action:update:all']
-description = "Automatically update all GitHub Action versions and pin to commit hashes by default"
-run = "actions-up --yes"
+[tasks."actions:check"]
+description = "Run actionlint"
+depends = ["actions:pin-offline:check"]
+run = "actionlint"
+
+[tasks.'actions:update']
+description = "Update GitHub Action versions and pin to commit hashes"
+run = "pinact run --update"
+
+[tasks.'actions:pin-offline:check']
+description = "Check GitHub Action versions and pin to commit hashes"
+run = "unset PINACT_MIN_AGE && pinact run --fix=false --no-api"
 
 [tasks.'docs:install']
 description = "Install documentation site dependencies"
@@ -125,13 +168,13 @@ ZDOTDIR="$zdotdir" zsh -d -i
 
 [tasks.'docs:dev']
 description = "Start the VitePress documentation site"
-depends = ["cli:docs", "docs:install"]
+depends = ["docs:install"]
 dir = "docs"
 run = "pnpm dev"
 
 [tasks.'docs:build']
 description = "Build the VitePress documentation site"
-depends = ["cli:docs", "docs:install"]
+depends = ["docs:install"]
 dir = "docs"
 run = "pnpm build"
 
