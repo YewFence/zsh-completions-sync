@@ -46,7 +46,7 @@ _waydroid_session() {
 
   _arguments -C \
     $_waydroid_global_options \
-    '1:command:->command' \
+    '2:command:->command' \
     '*::arg:->arg'
 
   case $state in
@@ -54,7 +54,7 @@ _waydroid_session() {
       _describe -t commands 'session command' subcommands
       ;;
     arg)
-      case $words[1] in
+      case $line[2] in
         start)
           ;;
         stop)
@@ -79,7 +79,7 @@ _waydroid_container() {
 
   _arguments -C \
     $_waydroid_global_options \
-    '1:command:->command' \
+    '2:command:->command' \
     '*::arg:->arg'
 
   case $state in
@@ -87,7 +87,7 @@ _waydroid_container() {
       _describe -t commands 'container command' subcommands
       ;;
     arg)
-      case $words[1] in
+      case $line[2] in
         start)
           ;;
         stop)
@@ -118,7 +118,7 @@ _waydroid_app() {
 
   _arguments -C \
     $_waydroid_global_options \
-    '1:command:->command' \
+    '2:command:->command' \
     '*::arg:->arg'
 
   case $state in
@@ -126,23 +126,23 @@ _waydroid_app() {
       _describe -t commands 'app command' subcommands
       ;;
     arg)
-      case $words[1] in
+      case $line[2] in
         install)
           _arguments \
-            '1:package:_files -g "*.apk(-.)"'
+            '3:package:_files -g "*.apk(-.)"'
           ;;
         remove)
           _arguments \
-            '1:package:'
+            '3:package:'
           ;;
         launch)
           _arguments \
-            '1:package:'
+            '3:package:'
           ;;
         intent)
           _arguments \
-            '1:action:' \
-            '2:uri:'
+            '3:action:' \
+            '4:uri:'
           ;;
         list)
           ;;
@@ -163,7 +163,7 @@ _waydroid_prop() {
 
   _arguments -C \
     $_waydroid_global_options \
-    '1:command:->command' \
+    '2:command:->command' \
     '*::arg:->arg'
 
   case $state in
@@ -171,15 +171,15 @@ _waydroid_prop() {
       _describe -t commands 'prop command' subcommands
       ;;
     arg)
-      case $words[1] in
+      case $line[2] in
         get)
           _arguments \
-            '1:key:'
+            '3:key:'
           ;;
         set)
           _arguments \
-            '1:key:' \
-            '2:value:'
+            '3:key:' \
+            '4:value:'
           ;;
       esac
       ;;
@@ -198,7 +198,7 @@ _waydroid_adb() {
 
   _arguments -C \
     $_waydroid_global_options \
-    '1:command:->command' \
+    '2:command:->command' \
     '*::arg:->arg'
 
   case $state in
@@ -206,7 +206,7 @@ _waydroid_adb() {
       _describe -t commands 'adb command' subcommands
       ;;
     arg)
-      case $words[1] in
+      case $line[2] in
         connect)
           ;;
         disconnect)
@@ -248,8 +248,8 @@ _waydroid() {
       _describe -t commands 'waydroid command' commands
       ;;
     arg)
-      curcontext="${curcontext%:*:*}:waydroid-$words[1]:"
-      case $words[1] in
+      curcontext="${curcontext%:*:*}:waydroid-$line[1]:"
+      case $line[1] in
         status)
           ;;
         log)
@@ -262,7 +262,7 @@ _waydroid() {
             '(-i --images_path)'{-i,--images_path}'[custom path to waydroid images]:images path:_files -/' \
             '(-f --force)'{-f,--force}'[re-initialize configs and images]' \
             '(-c --system_channel)'{-c,--system_channel}'[custom system channel]:system channel:' \
-            '(-v --vendor_channel)'{-v,--vendor_channel}'[custom vendor channel]:vendor channel:' \
+            '--vendor_channel=[custom vendor channel]:vendor channel:' \
             '(-r --rom_type)'{-r,--rom_type}'[rom type]:rom type:_waydroid_rom_types' \
             '(-s --system_type)'{-s,--system_type}'[system type]:system type:_waydroid_system_types' \
             '--client[run as user mode]'

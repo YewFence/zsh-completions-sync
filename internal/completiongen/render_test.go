@@ -35,6 +35,45 @@ func TestRenderZshOptionSpecs(t *testing.T) {
 	assertNotContains(t, content, "'(-h --help){-h,--help}[show help]'")
 }
 
+func TestRenderZshUsesCommandDepthForDispatch(t *testing.T) {
+	output, err := RenderZsh(Spec{
+		Name: "demo",
+		Commands: []Command{
+			{
+				Name:        "get",
+				Description: "get item",
+				Arguments: []Argument{
+					{Name: "target", Completion: "_files"},
+				},
+			},
+			{
+				Name:        "group",
+				Description: "manage group",
+				Commands: []Command{
+					{
+						Name:        "add",
+						Description: "add item",
+						Arguments: []Argument{
+							{Name: "item", Completion: "_files"},
+						},
+					},
+				},
+			},
+		},
+	})
+	if err != nil {
+		t.Fatalf("RenderZsh() error = %v", err)
+	}
+
+	content := string(output)
+	assertContains(t, content, `curcontext="${curcontext%:*:*}:demo-$line[1]:"`)
+	assertContains(t, content, "case $line[1] in")
+	assertContains(t, content, "case $line[2] in")
+	assertContains(t, content, "'2:command:->command'")
+	assertContains(t, content, "'2:target:_files'")
+	assertContains(t, content, "'3:item:_files'")
+}
+
 func assertContains(t *testing.T, content, want string) {
 	t.Helper()
 	if !strings.Contains(content, want) {

@@ -55,7 +55,7 @@ commands: [
 				argument:    "system channel"
 			},
 			{
-				flags: ["-v", "--vendor_channel"]
+				flags: ["--vendor_channel"]
 				description: "custom vendor channel"
 				argument:    "vendor channel"
 			},

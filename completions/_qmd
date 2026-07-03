@@ -106,7 +106,7 @@ _qmd_collection() {
 
   _arguments -C \
     $_qmd_global_options \
-    '1:command:->command' \
+    '2:command:->command' \
     '*::arg:->arg'
 
   case $state in
@@ -114,43 +114,43 @@ _qmd_collection() {
       _describe -t commands 'collection command' subcommands
       ;;
     arg)
-      case $words[1] in
+      case $line[2] in
         list)
           ;;
         add)
           _arguments \
             '--name=[collection name]:name:' \
             '--mask=[glob pattern]:glob pattern:' \
-            '1:directory:_files -/'
+            '3:directory:_files -/'
           ;;
         remove|rm)
           _arguments \
-            '1:collection:_qmd_collections' \
+            '3:collection:_qmd_collections' \
             '*:command word:'
           ;;
         rename|mv)
           _arguments \
-            '1:old collection:_qmd_collections' \
-            '2:new collection name:'
+            '3:old collection:_qmd_collections' \
+            '4:new collection name:'
           ;;
         show|info)
           _arguments \
-            '1:collection:_qmd_collections' \
+            '3:collection:_qmd_collections' \
             '*:command word:'
           ;;
         update-cmd|set-update)
           _arguments \
-            '1:collection:_qmd_collections' \
+            '3:collection:_qmd_collections' \
             '*:command word:'
           ;;
         include)
           _arguments \
-            '1:collection:_qmd_collections' \
+            '3:collection:_qmd_collections' \
             '*:command word:'
           ;;
         exclude)
           _arguments \
-            '1:collection:_qmd_collections' \
+            '3:collection:_qmd_collections' \
             '*:command word:'
           ;;
         help)
@@ -175,7 +175,7 @@ _qmd_context() {
 
   _arguments -C \
     $_qmd_global_options \
-    '1:command:->command' \
+    '2:command:->command' \
     '*::arg:->arg'
 
   case $state in
@@ -183,7 +183,7 @@ _qmd_context() {
       _describe -t commands 'context command' subcommands
       ;;
     arg)
-      case $words[1] in
+      case $line[2] in
         add)
           _arguments \
             '*:path:_alternative '\''qmd-paths:qmd path:_guard "qmd://*" "qmd path"'\'' '\''files:file:_files'\'''
@@ -217,7 +217,7 @@ _qmd_mcp() {
     '--daemon[start as background daemon]' \
     '--port=[HTTP port]:port:' \
     '--host=[HTTP bind host]:host:_hosts' \
-    '1:command:->command' \
+    '2:command:->command' \
     '*::arg:->arg'
 
   case $state in
@@ -225,7 +225,7 @@ _qmd_mcp() {
       _describe -t commands 'mcp command' subcommands
       ;;
     arg)
-      case $words[1] in
+      case $line[2] in
         stop)
           ;;
         status)
@@ -248,7 +248,7 @@ _qmd_skill() {
 
   _arguments -C \
     $_qmd_global_options \
-    '1:command:->command' \
+    '2:command:->command' \
     '*::arg:->arg'
 
   case $state in
@@ -256,7 +256,7 @@ _qmd_skill() {
       _describe -t commands 'skill command' subcommands
       ;;
     arg)
-      case $words[1] in
+      case $line[2] in
         show)
           ;;
         install)
@@ -311,8 +311,8 @@ _qmd() {
       _describe -t commands 'qmd command' commands
       ;;
     arg)
-      curcontext="${curcontext%:*:*}:qmd-$words[1]:"
-      case $words[1] in
+      curcontext="${curcontext%:*:*}:qmd-$line[1]:"
+      case $line[1] in
         init)
           ;;
         collection)
@@ -323,17 +323,17 @@ _qmd() {
           ;;
         ls)
           _arguments \
-            '1:collection or qmd path:_alternative '\''collections:collection:_qmd_collections'\'' '\''qmd-paths:qmd path:_guard "qmd://*" "qmd path"'\'''
+            '2:collection or qmd path:_alternative '\''collections:collection:_qmd_collections'\'' '\''qmd-paths:qmd path:_guard "qmd://*" "qmd path"'\'''
           ;;
         get)
           _arguments \
             $_qmd_get_options \
-            '1:file or docid:_files'
+            '2:file or docid:_files'
           ;;
         multi-get)
           _arguments \
             $_qmd_multi_get_options \
-            '1:glob, list, or docid:_files'
+            '2:glob, list, or docid:_files'
           ;;
         status)
           ;;
@@ -385,7 +385,7 @@ _qmd() {
           _arguments \
             '(-c --collection)'{-c,--collection}'[benchmark collection]:collection:_qmd_collections' \
             '--json[JSON output]' \
-            '1:fixture JSON:_files -g "*.json(-.)"'
+            '2:fixture JSON:_files -g "*.json(-.)"'
           ;;
         mcp)
           _qmd_mcp

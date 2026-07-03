@@ -19,14 +19,15 @@ func RenderZsh(spec Spec) ([]byte, error) {
 }
 
 type renderModel struct {
-	Name          string
-	Helpers       []string
-	Values        []valueModel
-	OptionArrays  []optionArrayModel
-	Functions     []functionModel
-	RootCommands  []commandEntryModel
-	RootArguments []lineModel
-	RootCases     []caseModel
+	Name                string
+	Helpers             []string
+	Values              []valueModel
+	OptionArrays        []optionArrayModel
+	Functions           []functionModel
+	RootCommands        []commandEntryModel
+	RootArguments       []lineModel
+	RootCommandArgument string
+	RootCases           []caseModel
 }
 
 type valueModel struct {
@@ -42,12 +43,13 @@ type optionArrayModel struct {
 }
 
 type functionModel struct {
-	Name           string
-	CommandLabel   string
-	Subcommands    []commandEntryModel
-	Arguments      []lineModel
-	Cases          []caseModel
-	HasSubcommands bool
+	Name            string
+	CommandLabel    string
+	Subcommands     []commandEntryModel
+	Arguments       []lineModel
+	Cases           []caseModel
+	CommandArgument string
+	HasSubcommands  bool
 }
 
 type commandEntryModel struct {
@@ -73,14 +75,15 @@ type modelBuilder struct {
 func newRenderModel(spec Spec) renderModel {
 	builder := modelBuilder{spec: spec}
 	model := renderModel{
-		Name:          spec.Name,
-		Helpers:       builder.helpers(),
-		Values:        builder.values(),
-		OptionArrays:  builder.optionArrays(),
-		Functions:     builder.functions(),
-		RootCommands:  builder.commandEntries(spec.Commands),
-		RootArguments: lineModels(builder.rootArguments()),
-		RootCases:     builder.cases(spec.Commands, nil),
+		Name:                spec.Name,
+		Helpers:             builder.helpers(),
+		Values:              builder.values(),
+		OptionArrays:        builder.optionArrays(),
+		Functions:           builder.functions(),
+		RootCommands:        builder.commandEntries(spec.Commands),
+		RootArguments:       lineModels(builder.rootArguments()),
+		RootCommandArgument: argumentReference(1),
+		RootCases:           builder.cases(spec.Commands, nil),
 	}
 	return model
 }
@@ -145,12 +148,13 @@ func (builder modelBuilder) functions() []functionModel {
 			}
 			commandPath := append(path, command.Name)
 			functions = append(functions, functionModel{
-				Name:           builder.commandFunctionName(commandPath),
-				CommandLabel:   shellSingleQuote(command.Name + " command"),
-				Subcommands:    builder.commandEntries(command.Commands),
-				Arguments:      lineModels(builder.commandStateArguments(command)),
-				Cases:          builder.cases(command.Commands, commandPath),
-				HasSubcommands: len(command.Commands) > 0,
+				Name:            builder.commandFunctionName(commandPath),
+				CommandLabel:    shellSingleQuote(command.Name + " command"),
+				Subcommands:     builder.commandEntries(command.Commands),
+				Arguments:       lineModels(builder.commandStateArguments(command, commandPath)),
+				Cases:           builder.cases(command.Commands, commandPath),
+				CommandArgument: argumentReference(commandArgumentPosition(commandPath)),
+				HasSubcommands:  len(command.Commands) > 0,
 			})
 			walk(command.Commands, commandPath)
 		}
@@ -184,15 +188,16 @@ func (builder modelBuilder) rootArguments() []string {
 	return append(lines, "'1:command:->command'", "'*::arg:->arg'")
 }
 
-func (builder modelBuilder) commandStateArguments(command Command) []string {
+func (builder modelBuilder) commandStateArguments(command Command, commandPath []string) []string {
 	lines := builder.optionLines(command, true)
-	return append(lines, "'1:command:->command'", "'*::arg:->arg'")
+	commandPosition := commandArgumentPosition(commandPath)
+	return append(lines, shellSingleQuote(fmt.Sprintf("%d:command:->command", commandPosition)), "'*::arg:->arg'")
 }
 
-func (builder modelBuilder) leafArguments(command Command) []string {
+func (builder modelBuilder) leafArguments(command Command, commandPath []string) []string {
 	lines := builder.optionLines(command, false)
 	for index, argument := range command.Arguments {
-		lines = append(lines, builder.argumentSpec(index+1, argument))
+		lines = append(lines, builder.argumentSpec(argumentPosition(commandPath, index), argument))
 	}
 	return lines
 }
@@ -216,11 +221,23 @@ func (builder modelBuilder) cases(commands []Command, path []string) []caseModel
 		if len(command.Commands) > 0 {
 			model.Call = builder.commandFunctionName(commandPath)
 		} else {
-			model.Arguments = lineModels(builder.leafArguments(command))
+			model.Arguments = lineModels(builder.leafArguments(command, commandPath))
 		}
 		cases = append(cases, model)
 	}
 	return cases
+}
+
+func commandArgumentPosition(commandPath []string) int {
+	return len(commandPath) + 1
+}
+
+func argumentPosition(commandPath []string, argumentIndex int) int {
+	return len(commandPath) + argumentIndex + 1
+}
+
+func argumentReference(position int) string {
+	return fmt.Sprintf("$line[%d]", position)
 }
 
 func lineModels(lines []string) []lineModel {
@@ -433,7 +450,7 @@ const zshTemplate = `#compdef {{ .Name }}
       _describe -t commands {{ .CommandLabel }} subcommands
       ;;
     arg)
-      case $words[1] in
+      case {{ .CommandArgument }} in
 {{- range .Cases }}
         {{ .Pattern }})
 {{- if .Call }}
@@ -472,8 +489,8 @@ _{{ .Name }}() {
       _describe -t commands '{{ .Name }} command' commands
       ;;
     arg)
-      curcontext="${curcontext%:*:*}:{{ .Name }}-$words[1]:"
-      case $words[1] in
+      curcontext="${curcontext%:*:*}:{{ .Name }}-{{ .RootCommandArgument }}:"
+      case {{ .RootCommandArgument }} in
 {{- range .RootCases }}
         {{ .Pattern }})
 {{- if .Call }}
