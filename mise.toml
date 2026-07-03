@@ -84,9 +84,9 @@ run = "git ls-files | xargs nllint --trim-space"
 
 [tasks.check]
 description = """
-Run read-only checks for Go modules, newlines, typos, formatting, GitHub Actions, lint, build, and tests"""
+Run read-only checks for Go modules, maintained completions, newlines, typos, formatting, GitHub Actions, lint, build, and tests"""
 run = [
-  { tasks = [ "mod:tidy:check", "newline:check", "typos:check", "build:check" ] },
+  { tasks = [ "mod:tidy:check", "completions:check", "newline:check", "typos:check", "build:check" ] },
   { task = "leaks:check" },
   { task = "actions:check" },
   { task = "lint" },
@@ -99,7 +99,8 @@ run = [
   { task = "mod:tidy" },
   { task = "newline:fix" },
   { task = "typos:fix" },
-  { task = "fmt:fix" }
+  { task = "fmt:fix" },
+  { task = "completions:gen"}
 ]
 
 [tasks.cli]
@@ -143,6 +144,10 @@ run = "go run ./cmd/zcs-docs"
 [tasks.'completions:gen']
 description = "Generate maintained static zsh completion scripts from CUE specs"
 run = "go run ./cmd/zcs-completion-gen"
+
+[tasks.'completions:check']
+description = "Check whether maintained static zsh completion scripts match CUE specs"
+run = "go run ./cmd/zcs-completion-gen --check"
 
 [tasks.'completions:shell']
 description = "Open an interactive zsh with maintained completions loaded"
