@@ -32,6 +32,7 @@
       "description": "Tidy Go modules after dependency updates.",
       "matchManagers": ["gomod"],
       "matchDepTypes": ["require", "indirect"],
+      "enabled": true,
       "groupName": "Go modules",
       "postUpdateOptions": ["gomodTidy"],
       "semanticCommitType": "chore",
