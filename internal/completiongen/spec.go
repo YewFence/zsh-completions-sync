@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"cuelang.org/go/cue"
 	"cuelang.org/go/cue/cuecontext"
@@ -98,36 +99,51 @@ func validateSpec(spec Spec) error {
 			return fmt.Errorf("option group name is required")
 		}
 	}
-	if err := validateOptions(spec.GlobalOptions); err != nil {
+	if err := validateOptionGroups(spec.GlobalOptionGroups, spec.OptionGroups); err != nil {
+		return err
+	}
+	if err := validateOptions(spec.GlobalOptions, spec.Values); err != nil {
 		return err
 	}
 	for name, options := range spec.OptionGroups {
-		if err := validateOptions(options); err != nil {
+		if err := validateOptions(options, spec.Values); err != nil {
 			return fmt.Errorf("option group %s: %w", name, err)
 		}
 	}
-	return validateCommands(spec.Commands)
+	return validateCommands(spec.Commands, spec.OptionGroups, spec.Values)
 }
 
-func validateCommands(commands []Command) error {
+func validateCommands(commands []Command, optionGroups map[string][]Option, values map[string][]string) error {
 	for _, command := range commands {
 		if command.Name == "" {
 			return fmt.Errorf("command name is required")
 		}
-		if err := validateOptions(command.Options); err != nil {
+		if err := validateOptionGroups(command.OptionGroups, optionGroups); err != nil {
 			return fmt.Errorf("command %s: %w", command.Name, err)
 		}
-		if err := validateArguments(command.Arguments); err != nil {
+		if err := validateOptions(command.Options, values); err != nil {
 			return fmt.Errorf("command %s: %w", command.Name, err)
 		}
-		if err := validateCommands(command.Commands); err != nil {
+		if err := validateArguments(command.Arguments, values); err != nil {
+			return fmt.Errorf("command %s: %w", command.Name, err)
+		}
+		if err := validateCommands(command.Commands, optionGroups, values); err != nil {
 			return fmt.Errorf("command %s: %w", command.Name, err)
 		}
 	}
 	return nil
 }
 
-func validateOptions(options []Option) error {
+func validateOptionGroups(names []string, optionGroups map[string][]Option) error {
+	for _, name := range names {
+		if _, ok := optionGroups[name]; !ok {
+			return fmt.Errorf("option group %s is not defined", name)
+		}
+	}
+	return nil
+}
+
+func validateOptions(options []Option, values map[string][]string) error {
 	for _, option := range options {
 		if len(option.Flags) == 0 {
 			return fmt.Errorf("option flags are required")
@@ -137,14 +153,31 @@ func validateOptions(options []Option) error {
 				return fmt.Errorf("option flag is required")
 			}
 		}
+		if err := validateCompletion(option.Completion, values); err != nil {
+			return err
+		}
 	}
 	return nil
 }
 
-func validateArguments(arguments []Argument) error {
+func validateArguments(arguments []Argument, values map[string][]string) error {
 	for _, argument := range arguments {
 		if argument.Name == "" {
 			return fmt.Errorf("argument name is required")
+		}
+		if err := validateCompletion(argument.Completion, values); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func validateCompletion(completion string, values map[string][]string) error {
+	completion = strings.TrimSpace(completion)
+	if strings.HasPrefix(completion, "value:") || strings.HasPrefix(completion, "values:") {
+		_, name, _ := strings.Cut(completion, ":")
+		if _, ok := values[name]; !ok {
+			return fmt.Errorf("value %s is not defined", name)
 		}
 	}
 	return nil
