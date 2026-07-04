@@ -31,7 +31,6 @@ jobs:
         with:
           ref: main
           fetch-depth: 0
-          filter: blob:none
 
       - name: Setup mise
         uses: jdx/mise-action@e6a8b3978addb5a52f2b4cd9d91eafa7f0ab959d # v4.2.0
@@ -80,7 +79,7 @@ jobs:
         env:
           RELEASE_TAG: ${{ steps.release.outputs.tag }}
         run: |
-          if git diff --quiet -- CHANGELOG.md; then
+          if [[ -z "$(git status --porcelain -- CHANGELOG.md)" ]]; then
             echo "CHANGELOG.md is already up to date"
             echo "changed=false" >> "${GITHUB_OUTPUT}"
             exit 0

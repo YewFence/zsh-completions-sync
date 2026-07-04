@@ -68,7 +68,6 @@ jobs:
           persist-credentials: false
           ref: ${{ github.event.pull_request.merge_commit_sha || inputs.tag || github.ref }}
           fetch-depth: 0
-          filter: blob:none
 
       - name: Setup mise
         uses: jdx/mise-action@e6a8b3978addb5a52f2b4cd9d91eafa7f0ab959d # v4.2.0

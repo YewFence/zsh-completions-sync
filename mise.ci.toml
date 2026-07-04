@@ -21,6 +21,7 @@ run = "pinact run --update --diff"
 
 [tasks.'release:version']
 description = "Print the next release version without the v prefix"
+shell = "bash -c"
 run = """
 version="$(git cliff --bumped-version)"
 version="${version#v}"
@@ -34,6 +35,7 @@ printf '%s\\n' "${version}"
 
 [tasks.'release:tag']
 description = "Print the release tag, automatically generate if RELEASE_TAG is not set"
+shell = "bash -c"
 run = """
 tag="${RELEASE_TAG:-}"
 if [[ -z "${tag}" ]]; then
@@ -45,6 +47,7 @@ printf '%s\\n' "${tag}"
 
 [tasks.'release:notes']
 description = "Generate release notes for RELEASE_TAG, or for the next release tag"
+shell = "bash -c"
 run = """
 tag="$(mise run release:tag)"
 
@@ -68,6 +71,7 @@ fi
 
 [tasks.'release:changelog']
 description = "Update CHANGELOG.md for RELEASE_TAG, or for the next release tag"
+shell = "bash -c"
 run = """
 tag="$(mise run release:tag)"
 
@@ -80,6 +84,7 @@ fi
 
 [tasks.'release:tag:create']
 description = "Create the release tag for RELEASE_TAG, or for the next release tag"
+shell = "bash -c"
 run = """
 tag="$(mise run release:tag)"
 
