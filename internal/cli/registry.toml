@@ -91,3 +91,23 @@ command = ["sem", "completions", "zsh"]
 [tools.rip]
 scopes = ["global"]
 command = ["rip", "completions", "zsh"]
+
+[tools.atuin]
+scopes = ["global"]
+command = ["atuin", "gen-completions", "--shell", "zsh"]
+
+[tools.nono]
+scopes = [ "global"]
+command = ["nono", "completion", "zsh"]
+
+[tools.codex]
+scopes = ["global"]
+command = ["codex", "completion", "zsh"]
+
+[tools.fnox]
+scopes = ["global"]
+command = ["fnox", "completion", "zsh"]
+
+[tools.gcx]
+scopes = ["global"]
+command = ["gcx", "completion", "zsh"]
