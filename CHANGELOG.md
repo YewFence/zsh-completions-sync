@@ -1,4 +1,18 @@
 ## What's Changed in 0.3.0
+* feat(check-update): warn about stale completions instead of auto-generating by @YewFence in [#5](https://github.com/YewFence/zsh-completions-sync/pull/5)
+* update a simple example about custom tool in user config file by @YewFence
+* apply new engineer template for CI/CD and project tooling by @YewFence
+* add some tools to builtin registry by @YewFence
+* chore: release v0.3.0 by @github-actions[bot] in [#2](https://github.com/YewFence/zsh-completions-sync/pull/2)
+* fix and improve release workflow by @YewFence
+* Feat/generate completions with specs by @YewFence in [#1](https://github.com/YewFence/zsh-completions-sync/pull/1)
+
+### New Contributors
+* @github-actions[bot] made their first contribution in [#2](https://github.com/YewFence/zsh-completions-sync/pull/2)
+
+**Full Changelog**: https://github.com/YewFence/zsh-completions-sync/compare/v0.2.0...v0.3.0
+
+## What's Changed in 0.3.0
 * fix and improve release workflow by @YewFence
 * Feat/generate completions with specs by @YewFence in [#1](https://github.com/YewFence/zsh-completions-sync/pull/1)
 
