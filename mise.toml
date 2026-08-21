@@ -20,9 +20,12 @@ pinact = "4"
 typos = "1"
 betterleaks = "1"
 actionlint = "1"
-git-cliff = "latest"
-hk = "latest"
 cue = "latest"
+
+[vars]
+nllint_excludes = ""
+# example: exclude file
+# nllint_excludes = "':(top,exclude)file'"
 
 [env]
 # the minimum release age of github actions in days
@@ -31,6 +34,7 @@ PINACT_GITHUB_TOKEN = { value = "${MISE_GITHUB_TOKEN:-}", redact = true }
 
 [env._]
 path = ["./bin", "${GOBIN:-}"]
+
 [tasks."mod:tidy"]
 description = "Tidy Go module dependencies"
 run = "go mod tidy"
@@ -74,13 +78,13 @@ run = "typos"
 description = "Fix Typos Lint"
 run = "typos --write-changes"
 
-[tasks."newline:fix"]
-description = "Fix Newline Lint issues"
-run = "git ls-files | xargs nllint --fix --trim-space"
-
 [tasks."newline:check"]
-description = "Check Newline Lint issues"
-run = "git ls-files | xargs nllint --trim-space"
+description = "Check final newlines and surrounding whitespace in tracked text files"
+run = "git grep -Ilz '' -- . {{ vars.nllint_excludes }} | xargs -0 nllint --trim-space"
+
+[tasks."newline:fix"]
+description = "Fix final newlines and surrounding whitespace in tracked text files"
+run = "git grep -Ilz '' -- . {{ vars.nllint_excludes }} | xargs -0 nllint --fix --trim-space"
 
 [tasks.check]
 description = """
@@ -92,6 +96,7 @@ run = [
   { task = "lint" },
   { task = "test" }
 ]
+alias = "c"
 
 [tasks.fix]
 description = "Fix Go modules, newlines, typos, and formatting"
@@ -100,8 +105,9 @@ run = [
   { task = "newline:fix" },
   { task = "typos:fix" },
   { task = "fmt:fix" },
-  { task = "completions:gen"}
+  { task = "completions:gen" }
 ]
+alias = "f"
 
 [tasks.cli]
 description = "Run the CLI"
@@ -115,31 +121,20 @@ run = 'go install -trimpath -ldflags="-X main.version=${BUILD_VERSION:-dev}" ./c
 description = "Build the CLI executable"
 run = 'go build -trimpath -ldflags="-s -w -X main.version=${BUILD_VERSION:-dev}" -o "${BUILD_OUTPUT_DIR:-bin}/" ./cmd/zcs'
 
-[tasks."build:check"]
-description = "Check whether the CLI builds"
-run = "go test -run '^$' ./cmd/..."
-
-[tasks."actions:check"]
-description = "Run actionlint"
-depends = ["actions:pin-offline:check"]
-run = "actionlint"
-
-[tasks.'actions:update']
-description = "Update GitHub Action versions and pin to commit hashes"
-run = "pinact run --update"
-
-[tasks.'actions:pin-offline:check']
-description = "Check GitHub Action versions and pin to commit hashes"
-run = "unset PINACT_MIN_AGE && pinact run --fix=false --no-api"
-
 [tasks.'docs:install']
 description = "Install documentation site dependencies"
 dir = "docs"
 run = "pnpm install"
 
-[tasks.'cli:docs']
-description = "Generate CLI reference documentation"
-run = "go run ./cmd/zcs-docs"
+[tasks.'docs:lock']
+description = "Generate the documentation lockfile without installing dependencies"
+dir = "docs"
+run = "pnpm install --lockfile-only"
+
+[tasks.'docs:install:locked']
+description = "Install documentation dependencies from the committed lockfile"
+dir = "docs"
+run = "pnpm install --frozen-lockfile"
 
 [tasks.'completions:gen']
 description = "Generate maintained static zsh completion scripts from CUE specs"
@@ -173,18 +168,35 @@ ZDOTDIR="$zdotdir" zsh -d -i
 
 [tasks.'docs:dev']
 description = "Start the VitePress documentation site"
-depends = ["docs:install"]
+depends = ["docs:install:locked"]
 dir = "docs"
-run = "pnpm dev"
+run = "pnpm run dev"
 
 [tasks.'docs:build']
 description = "Build the VitePress documentation site"
-depends = ["docs:install"]
+depends = ["docs:install:locked"]
 dir = "docs"
-run = "pnpm build"
+run = "pnpm run build"
 
 [tasks.'docs:preview']
 description = "Preview the VitePress documentation site"
-depends = ["docs:install"]
+depends = ["docs:install:locked"]
 dir = "docs"
-run = "pnpm preview"
+run = "pnpm run preview"
+
+[tasks."build:check"]
+description = "Check whether the CLI builds"
+run = "go test -run '^$' ./cmd/..."
+
+[tasks."actions:check"]
+description = "Run actionlint"
+depends = ["actions:pin-offline:check"]
+run = "actionlint .github/workflows/*.yml"
+
+[tasks.'actions:update']
+description = "Update GitHub Action versions and pin to commit hashes"
+run = "pinact run --update"
+
+[tasks.'actions:pin-offline:check']
+description = "Check GitHub Action versions and pin to commit hashes"
+run = "unset PINACT_MIN_AGE && pinact run --fix=false --no-api"

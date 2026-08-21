@@ -3,13 +3,12 @@ import "package://github.com/jdx/hk/releases/download/v1.45.0/hk@1.45.0#/Builtin
 
 local linters = new Mapping<String, Step> {
   ["completions:gen"] {
-      glob = List("*")
-      fix = "mise run completions:gen"
+    glob = List("*")
+    fix = "mise run completions:gen"
   }
   ["lint"] {
     fix = "mise run fix"
     check = "mise run check"
-    check_first = true
   }
   // This step don't contain autofix
   ["large-file"] = Builtins.check_added_large_files
@@ -17,8 +16,6 @@ local linters = new Mapping<String, Step> {
 
 hooks {
   ["pre-commit"] {
-    fix = true
-    stage = true
     stash = "git"
     steps = linters
   }

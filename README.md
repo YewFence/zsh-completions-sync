@@ -1,5 +1,9 @@
 # zsh-completions-sync
 
+[![Release](https://img.shields.io/github/v/release/YewFence/zsh-completions-sync?sort=semver)](https://github.com/YewFence/zsh-completions-sync/releases)
+[![Docs](https://img.shields.io/badge/docs-online-blue)](https://YewFence.github.io/zsh-completions-sync/)
+[![License](https://img.shields.io/github/license/YewFence/zsh-completions-sync)](LICENSE)
+
 `zcs` 是一个 zsh 补全脚本管理 CLI。很多命令行工具都能生成 zsh 补全脚本，但生成方式、输出位置和更新时机并不统一。`zcs` 用一份 `TOML` 注册表描述这些工具的补全来源，通过直观的 `zcs generate` 命令统一生成补全脚本，并提供自动更新功能。它也可以结合一些 hook 能力管理项目级别特有文件的补全脚本。
 
 > `zcs` 正在早期开发中，不保证向后兼容性。功能可能尚不完备，欢迎尝试和反馈。
