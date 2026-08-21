@@ -68,6 +68,18 @@ echo 'eval "$(zcs check-update)"' >> ~/.zshrc
 
 如果使用 `mise` 等工具管理器，请把自动更新脚本放在命令管理器初始化之后。自动更新的原理详见[高级用法](./docs/advanced-usage.md)文档中的说明。
 
+### 自定义工具
+
+你可以在 `~/.config/zsh-completions-sync/registry.toml` 中声明自己的工具，将它纳入补全管理：
+
+```toml
+[tools.my-tool]
+scopes = ["global"]
+command = ["my-tool", "completion", "zsh"]
+```
+
+将 `my-tool` 和 `command` 替换为实际的工具名及其补全生成命令即可。更多支持的配置项和补全来源见[配置文件文档](./docs/guide/config-file.md)。
+
 ## 常用命令
 
 完整命令说明请查看 Cobra 自动生成的[命令参考](./docs/reference/zcs.md)。
