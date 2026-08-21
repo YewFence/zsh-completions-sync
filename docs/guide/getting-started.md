@@ -75,15 +75,15 @@ source ~/.zshrc
 
 重新打开 shell 后，zsh 会把 `~/.zsh/completions` 加入 `fpath` 并调用 `compinit`。
 
-## 自动刷新全局补全
+## 检查全局补全更新
 
-如果想在工具升级后自动刷新已有补全，可以把 `zcs check-update` 加入 `.zshrc`。
+如果想在工具升级后收到补全过期提醒，可以把 `zcs check-update` 加入 `.zshrc`。检查只比较本地文件的修改时间，不会自动运行 `zcs generate` 或联网。
 
 ```zsh
 echo 'eval "$(zcs check-update)"' >> ~/.zshrc
 ```
 
-使用 `mise`、`asdf`、`Volta`、`Nix` 等命令管理器时，应该先完成命令管理器初始化，再运行 `zcs check-update` 输出的脚本。否则 zsh 可能只能看到长期不变的 shim 文件，底层工具升级后不会触发刷新。
+使用 `mise`、`asdf`、`Volta`、`Nix` 等命令管理器时，应该先完成命令管理器初始化，再运行 `zcs check-update` 输出的脚本。否则 zsh 可能只能看到长期不变的 shim 文件，底层工具升级后不会触发提醒。
 
 ## 下一步
 

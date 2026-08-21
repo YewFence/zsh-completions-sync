@@ -4,7 +4,7 @@ title: zcs_check-update
 
 ## zcs check-update
 
-Print a zsh snippet that refreshes stale global completions.
+Print a zsh snippet that warns about stale global completions.
 
 ```
 zcs check-update [flags]

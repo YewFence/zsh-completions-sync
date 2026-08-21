@@ -1,6 +1,6 @@
 # 高级用法
 
-本页收集更细的使用方式，包括项目级补全、单个工具生成、并发控制、自定义输出目录和自动更新原理。
+本页收集更细的使用方式，包括项目级补全、单个工具生成、并发控制、自定义输出目录和更新检查原理。
 
 ## 自定义 compinit 加载时机
 
@@ -70,7 +70,7 @@ zcs generate --output ~/.local/share/zsh/completions
 ZCS_OUTPUT_DIR=.completions/custom zcs generate --scope project
 ```
 
-如果自定义了全局输出目录，需要在 `.zshrc` 中同步设置 `ZCS_GLOBAL_OUTPUT_DIR`，否则 `zcs init global` 和 `zcs check-update` 输出的加载脚本仍然会使用默认目录。
+如果自定义了全局输出目录，需要在 `.zshrc` 中同步设置 `ZCS_GLOBAL_OUTPUT_DIR`，否则 `zcs init global` 和 `zcs check-update` 输出的片段仍然会使用默认目录。
 
 ```zsh
 export ZCS_GLOBAL_OUTPUT_DIR="$HOME/.local/share/zsh/completions"
@@ -78,11 +78,11 @@ eval "$(zcs init global)"
 eval "$(zcs check-update)"
 ```
 
-## 自动更新原理
+## 更新提醒原理
 
 `zcs check-update` 会输出一段 zsh 脚本。它会遍历全局补全目录里的 `_tool` 文件，用文件名反推出工具名，再比较对应同名可执行文件和补全文件的修改时间。
 
-只要有一个可执行文件比已有补全文件更新，这段脚本就会静默运行一次 `zcs generate`。
+只要有一个可执行文件比已有补全文件更新，这段脚本就会提示补全已过期，并建议手动运行 `zcs generate`。它不会自动生成补全，也不会在 shell 启动时联网。
 
 这个机制不会读取注册表，也不会发现从未生成过补全的新工具。新工具仍然需要手动运行 `zcs generate` 或 `zcs generate tool`。
 
@@ -92,7 +92,7 @@ eval "$(zcs check-update)"
 zcs generate
 ```
 
-使用 `mise`、`asdf`、`Volta`、`Nix` 这类命令管理器时要注意初始化顺序。自动刷新片段依赖 zsh 的 `${commands[tool]}` 找到当前可执行文件，如果它在命令管理器激活之前运行，看到的可能是长期不变的 shim 修改时间，底层工具升级后也不会触发刷新。
+使用 `mise`、`asdf`、`Volta`、`Nix` 这类命令管理器时要注意初始化顺序。更新检查片段依赖 zsh 的 `${commands[tool]}` 找到当前可执行文件，如果它在命令管理器激活之前运行，看到的可能是长期不变的 shim 修改时间，底层工具升级后也不会触发提醒。
 
 ## 相关文档
 

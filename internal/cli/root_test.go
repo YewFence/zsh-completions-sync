@@ -663,7 +663,7 @@ func TestInitProjectCommandSyncsProjectScope(t *testing.T) {
 	}
 }
 
-func TestCheckUpdateCommand(t *testing.T) {
+func TestCheckUpdateCommandWarnsInsteadOfGenerating(t *testing.T) {
 	buffer := new(bytes.Buffer)
 	command := newTestRootCommand(buffer, "check-update")
 	if err := command.Execute(); err != nil {
@@ -671,8 +671,14 @@ func TestCheckUpdateCommand(t *testing.T) {
 	}
 
 	output := buffer.String()
-	if !strings.Contains(output, "${commands[$_zcs_global_tool]}") || !strings.Contains(output, "ZCS_OUTPUT_DIR=\"$_zcs_global_completion_dir\" zcs generate") {
+	if !strings.Contains(output, "${commands[$_zcs_global_tool]}") {
 		t.Fatalf("check update snippet missing: %q", output)
+	}
+	if !strings.Contains(output, "zcs: Some zsh completion scripts are out of date. Run 'zcs generate' to update them.") {
+		t.Fatalf("check update warning missing: %q", output)
+	}
+	if strings.Count(output, "zcs generate") != 1 {
+		t.Fatalf("check update snippet should not generate completions: %q", output)
 	}
 }
 

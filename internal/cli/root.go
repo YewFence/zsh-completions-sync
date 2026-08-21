@@ -151,7 +151,7 @@ func newInitProjectCommand() *cobra.Command {
 func newCheckUpdateCommand() *cobra.Command {
 	return &cobra.Command{
 		Use:   "check-update",
-		Short: "Print a zsh snippet that refreshes stale global completions.",
+		Short: "Print a zsh snippet that warns about stale global completions.",
 		Args:  cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return writeCheckUpdateScript(cmd.OutOrStdout())
