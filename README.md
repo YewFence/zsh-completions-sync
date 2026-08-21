@@ -4,7 +4,7 @@
 [![Docs](https://img.shields.io/badge/docs-online-blue)](https://YewFence.github.io/zsh-completions-sync/)
 [![License](https://img.shields.io/github/license/YewFence/zsh-completions-sync)](LICENSE)
 
-`zcs` 是一个 zsh 补全脚本管理 CLI。很多命令行工具都能生成 zsh 补全脚本，但生成方式、输出位置和更新时机并不统一。`zcs` 用一份 `TOML` 注册表描述这些工具的补全来源，通过直观的 `zcs generate` 命令统一生成补全脚本，并提供自动更新功能。它也可以结合一些 hook 能力管理项目级别特有文件的补全脚本。
+`zcs` 是一个 zsh 补全脚本管理 CLI。很多命令行工具都能生成 zsh 补全脚本，但生成方式、输出位置和更新时机并不统一。`zcs` 用一份 `TOML` 注册表描述这些工具的补全来源，通过直观的 `zcs generate` 命令统一生成补全脚本，并提供更新检查功能。它也可以结合一些 hook 能力管理项目级别特有文件的补全脚本。
 
 > `zcs` 正在早期开发中，不保证向后兼容性。功能可能尚不完备，欢迎尝试和反馈。
 
@@ -60,13 +60,13 @@ echo 'eval "$(zcs init global)"' >> ~/.zshrc
 source ~/.zshrc
 ```
 
-3. 可选配置自动更新
+3. 可选配置更新提醒
 
 ```zsh
 echo 'eval "$(zcs check-update)"' >> ~/.zshrc
 ```
 
-如果使用 `mise` 等工具管理器，请把自动更新脚本放在命令管理器初始化之后。自动更新的原理详见[高级用法](./docs/advanced-usage.md)文档中的说明。
+如果使用 `mise` 等工具管理器，请把更新检查脚本放在命令管理器初始化之后。检查只会提示过期，不会自动生成补全或联网；具体原理详见[高级用法](./docs/guide/advanced-usage.md)。
 
 ### 自定义工具
 
@@ -93,7 +93,7 @@ command = ["my-tool", "completion", "zsh"]
 | `zcs generate pnpm` | 只生成指定工具的全局补全 |
 | `zcs init global` | 输出全局补全加载脚本 |
 | `zcs init project` | 输出项目补全加载脚本 |
-| `zcs check-update` | 输出全局补全自动刷新脚本 |
+| `zcs check-update` | 输出全局补全更新检查脚本 |
 
 ## 文档
 

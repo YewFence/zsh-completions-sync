@@ -3,9 +3,11 @@ package cli
 import (
 	"bytes"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/spf13/cobra"
 )
@@ -663,7 +665,7 @@ func TestInitProjectCommandSyncsProjectScope(t *testing.T) {
 	}
 }
 
-func TestCheckUpdateCommand(t *testing.T) {
+func TestCheckUpdateCommandWarnsInsteadOfGenerating(t *testing.T) {
 	buffer := new(bytes.Buffer)
 	command := newTestRootCommand(buffer, "check-update")
 	if err := command.Execute(); err != nil {
@@ -671,8 +673,84 @@ func TestCheckUpdateCommand(t *testing.T) {
 	}
 
 	output := buffer.String()
-	if !strings.Contains(output, "${commands[$_zcs_global_tool]}") || !strings.Contains(output, "ZCS_OUTPUT_DIR=\"$_zcs_global_completion_dir\" zcs generate") {
+	if !strings.Contains(output, "${commands[$_zcs_global_tool]}") {
 		t.Fatalf("check update snippet missing: %q", output)
+	}
+	if !strings.Contains(output, "print -u2 -r --") {
+		t.Fatalf("check update warning should use stderr: %q", output)
+	}
+	if !strings.Contains(output, "zcs: Some zsh completion scripts are out of date. Run 'zcs generate' to update them.") {
+		t.Fatalf("check update warning missing: %q", output)
+	}
+	if strings.Count(output, "zcs generate") != 1 {
+		t.Fatalf("check update snippet should not generate completions: %q", output)
+	}
+
+	testCases := []struct {
+		name            string
+		completionTime  time.Time
+		executableTime  time.Time
+		wantStaleOutput string
+	}{
+		{
+			name:           "fresh completion is silent",
+			completionTime: time.Unix(200, 0),
+			executableTime: time.Unix(100, 0),
+		},
+		{
+			name:            "stale completion warns on stderr",
+			completionTime:  time.Unix(100, 0),
+			executableTime:  time.Unix(200, 0),
+			wantStaleOutput: "zcs: Some zsh completion scripts are out of date. Run 'zcs generate' to update them.\n",
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			tempDir := t.TempDir()
+			completionDir := filepath.Join(tempDir, "completions")
+			binDir := filepath.Join(tempDir, "bin")
+			if err := os.MkdirAll(completionDir, 0o755); err != nil {
+				t.Fatalf("create completion dir: %v", err)
+			}
+			if err := os.MkdirAll(binDir, 0o755); err != nil {
+				t.Fatalf("create bin dir: %v", err)
+			}
+
+			completionPath := filepath.Join(completionDir, "_demo")
+			if err := os.WriteFile(completionPath, []byte("#compdef demo\n"), 0o644); err != nil {
+				t.Fatalf("write completion file: %v", err)
+			}
+			executablePath := filepath.Join(binDir, "demo")
+			if err := os.WriteFile(executablePath, []byte("#!/bin/sh\nexit 0\n"), 0o755); err != nil {
+				t.Fatalf("write executable: %v", err)
+			}
+			if err := os.Chtimes(completionPath, testCase.completionTime, testCase.completionTime); err != nil {
+				t.Fatalf("set completion timestamp: %v", err)
+			}
+			if err := os.Chtimes(executablePath, testCase.executableTime, testCase.executableTime); err != nil {
+				t.Fatalf("set executable timestamp: %v", err)
+			}
+
+			zsh := exec.Command("zsh", "-f")
+			zsh.Env = append(os.Environ(),
+				"PATH="+binDir+string(os.PathListSeparator)+os.Getenv("PATH"),
+				"ZCS_GLOBAL_OUTPUT_DIR="+completionDir,
+			)
+			zsh.Stdin = strings.NewReader(output)
+			var stdout, stderr bytes.Buffer
+			zsh.Stdout = &stdout
+			zsh.Stderr = &stderr
+			if err := zsh.Run(); err != nil {
+				t.Fatalf("run check-update snippet: %v", err)
+			}
+			if got := stdout.String(); got != "" {
+				t.Fatalf("unexpected stdout: %q", got)
+			}
+			if got := stderr.String(); got != testCase.wantStaleOutput {
+				t.Fatalf("unexpected stderr: %q", got)
+			}
+		})
 	}
 }
 
