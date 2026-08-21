@@ -45,6 +45,9 @@ jobs:
       - name: Validate CI tool locks
         run: mise install --dry-run --locked
 
+      - name: Install CI bootstrap packages
+        run: mise bootstrap packages apply --yes
+
       - name: Check
         run: mise run check
 
