@@ -49,3 +49,20 @@ mise run actions:update
 ```
 
 Read [mise.toml](mise.toml) for the task definitions.
+
+## Adding a CLI to the Built-in Registry
+
+Want to add a CLI tool to the built-in registry? Contributions are welcome, and the process is intentionally simple:
+
+1. Open an issue describing the CLI and include a link to its official website. The project's repository is fine if it does not have a separate website.
+2. Open a pull request that changes only [internal/registry/builtin.toml](internal/registry/builtin.toml). Add the tool using the existing TOML format, its homepage, and its actual completion command.
+3. Run `mise run registry:check` to verify that every built-in tool has a valid absolute HTTP(S) homepage.
+
+For example:
+
+```toml
+[tools.my-tool]
+homepage = "https://example.com/my-tool"
+scopes = ["global"]
+command = ["my-tool", "completion", "zsh"]
+```
