@@ -21,6 +21,7 @@ Synchronize zsh completion scripts into global and project-local completion dire
 
 * [zcs check-update](zcs_check-update)	 - Print a zsh snippet that warns about stale global completions.
 * [zcs generate](zcs_generate)	 - Generate completion scripts.
+* [zcs info](zcs_info)	 - Show detailed information about a configured completion tool.
 * [zcs init](zcs_init)	 - Print a zsh initialization snippet.
 * [zcs list](zcs_list)	 - List configured completion tools.
 * [zcs version](zcs_version)	 - Print version information

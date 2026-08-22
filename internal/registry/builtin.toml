@@ -1,113 +1,141 @@
 [tools.mise]
+homepage = "https://mise.jdx.dev/"
 scopes = ["global"]
 command = ["mise", "completion", "zsh"]
 
 [tools.gh]
+homepage = "https://cli.github.com/"
 scopes = ["global"]
 command = ["gh", "completion", "-s", "zsh"]
 
 [tools.docker]
+homepage = "https://www.docker.com/"
 scopes = ["global"]
 command = ["docker", "completion", "zsh"]
 
 [tools.starship]
+homepage = "https://starship.rs/"
 scopes = ["global"]
 command = ["starship", "completions", "zsh"]
 
 [tools.rclone]
+homepage = "https://rclone.org/"
 scopes = ["global"]
 command = ["rclone", "completion", "zsh", "-"]
 
 [tools.kubectl]
+homepage = "https://kubernetes.io/docs/reference/kubectl/"
 scopes = ["project"]
 command = ["kubectl", "completion", "zsh"]
 
 [tools.helm]
+homepage = "https://helm.sh/"
 scopes = ["project"]
 command = ["helm", "completion", "zsh"]
 
 [tools.uv]
+homepage = "https://docs.astral.sh/uv/"
 scopes = ["global", "project"]
 command = ["uv", "generate-shell-completion", "zsh"]
 
 [tools.pnpm]
+homepage = "https://pnpm.io/"
 scopes = ["global", "project"]
 command = ["pnpm", "completion", "zsh"]
 
 [tools.aube]
+homepage = "https://github.com/jdx/aube"
 scopes = ["global", "project"]
 command = ["aube", "completion", "zsh"]
 
 [tools.bun]
+homepage = "https://bun.sh/"
 scopes = ["project"]
 env = { SHELL="zsh"}
 command = ["bun", "completions"]
 
 [tools.chezmoi]
+homepage = "https://www.chezmoi.io/"
 scopes = ["global"]
 command = ["chezmoi", "completion", "zsh"]
 
 [tools.betterleaks]
+homepage = "https://github.com/betterleaks/betterleaks"
 scopes = ["global"]
 command = ["betterleaks", "completion", "zsh"]
 
 [tools.cargo]
+homepage = "https://www.rust-lang.org/tools/install"
 scopes = ["global", "project"]
 command = ["rustup", "completions", "zsh", "cargo"]
 
 [tools.rustup]
+homepage = "https://rust-lang.github.io/rustup/"
 scopes = ["global", "project"]
 command = ["rustup", "completions", "zsh"]
 
 [tools.bw]
+homepage = "https://bitwarden.com/help/cli/"
 scopes = ["global"]
 command = ["bw", "completion", "--shell", "zsh"]
 
 [tools.jj]
+homepage = "https://jj-vcs.dev/"
 scopes = ["global", "project"]
 env = { COMPLETE = "zsh" }
 command = ["jj"]
 
 [tools.zcs]
+homepage = "https://github.com/YewFence/zsh-completions-sync"
 scopes = ["global"]
 command = ["zcs", "completion", "zsh"]
 
 [tools.rmux]
+homepage = "https://rmux.io/"
 scopes = ["global"]
 file = { git = "https://github.com/YewFence/zsh-completions-sync.git", path = "completions/_rmux", ref = "main" }
 
 [tools.qmd]
+homepage = "https://github.com/tobi/qmd"
 scopes = ["global"]
 file = { git = "https://github.com/YewFence/zsh-completions-sync.git", path = "completions/_qmd", ref = "main" }
 
 [tools.waydroid]
+homepage = "https://waydro.id/"
 scopes = ["global"]
 file = { git = "https://github.com/YewFence/zsh-completions-sync.git", path = "completions/_waydroid", ref = "main" }
 
 [tools.sem]
+homepage = "https://github.com/Ataraxy-Labs/sem"
 scopes = ["global"]
 command = ["sem", "completions", "zsh"]
 
 [tools.rip]
+homepage = "https://github.com/MilesCranmer/rip2"
 scopes = ["global"]
 command = ["rip", "completions", "zsh"]
 
 [tools.atuin]
+homepage = "https://atuin.sh/"
 scopes = ["global"]
 command = ["atuin", "gen-completions", "--shell", "zsh"]
 
 [tools.nono]
+homepage = "https://github.com/always-further/nono"
 scopes = [ "global"]
 command = ["nono", "completion", "zsh"]
 
 [tools.codex]
+homepage = "https://github.com/openai/codex"
 scopes = ["global"]
 command = ["codex", "completion", "zsh"]
 
 [tools.fnox]
+homepage = "https://github.com/jdx/fnox"
 scopes = ["global"]
 command = ["fnox", "completion", "zsh"]
 
 [tools.gcx]
+homepage = "https://github.com/grafana/gcx"
 scopes = ["global"]
 command = ["gcx", "completion", "zsh"]

@@ -1,13 +1,13 @@
 package cli
 
 import (
-	"embed"
 	"fmt"
 	"io"
 	"os"
 	"path/filepath"
 
-	"github.com/BurntSushi/toml"
+	"github.com/YewFence/zsh-completions-sync/internal/registry"
+	"github.com/pelletier/go-toml/v2"
 )
 
 const (
@@ -21,9 +21,6 @@ const (
 	userConfigFile       = "registry.toml"
 	userLegacyConfigFile = "zsh-completions-sync-registry.toml"
 )
-
-//go:embed registry.toml
-var registryFS embed.FS
 
 type RegistryLayer struct {
 	Label    string
@@ -73,7 +70,7 @@ func defaultOutputDir(scope string) (string, error) {
 }
 
 func loadRegistry(projectDir string, stderr io.Writer) (LoadedRegistry, error) {
-	builtIn, err := readResourceTOML("registry.toml")
+	builtIn, err := registry.Builtin()
 	if err != nil {
 		return LoadedRegistry{}, err
 	}
@@ -153,23 +150,14 @@ func warnDuplicateConfig(preferredPath string, ignoredPath string, stderr io.Wri
 
 func readTOML(path string) (map[string]any, error) {
 	data := map[string]any{}
-	if _, err := toml.DecodeFile(path, &data); err != nil {
+	content, err := os.ReadFile(path)
+	if err != nil {
 		if os.IsNotExist(err) {
 			return map[string]any{}, nil
 		}
 		return nil, err
 	}
-	return data, nil
-}
-
-func readResourceTOML(name string) (map[string]any, error) {
-	content, err := registryFS.ReadFile(name)
-	if err != nil {
-		return nil, err
-	}
-
-	data := map[string]any{}
-	if _, err := toml.Decode(string(content), &data); err != nil {
+	if err := toml.Unmarshal(content, &data); err != nil {
 		return nil, err
 	}
 	return data, nil

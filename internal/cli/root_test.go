@@ -74,6 +74,34 @@ func TestListCommand(t *testing.T) {
 	if !strings.Contains(output, "Available") {
 		t.Fatalf("availability column missing: %q", output)
 	}
+	for _, unexpected := range []string{"Scopes", "Pre-command", "Config loaded from"} {
+		if strings.Contains(output, unexpected) {
+			t.Fatalf("compact table contains implementation column %q: %q", unexpected, output)
+		}
+	}
+}
+
+func TestListCommandRendersHomepage(t *testing.T) {
+	tempDir := t.TempDir()
+	sourcePath := writeTestCompletionSource(t, tempDir)
+	writeProjectConfig(t, tempDir, `[tools.local-tool]
+scopes = ["project"]
+check = false
+homepage = "https://example.com/local-tool"
+file = "`+sourcePath+`"
+`)
+	restoreWorkingDir := chdir(t, tempDir)
+	defer restoreWorkingDir()
+
+	buffer := new(bytes.Buffer)
+	command := newTestRootCommand(buffer, "list", "--scope", "project")
+	if err := command.Execute(); err != nil {
+		t.Fatalf("execute list command: %v", err)
+	}
+
+	if !strings.Contains(buffer.String(), "https://example.com/local-tool") {
+		t.Fatalf("homepage missing from output: %q", buffer.String())
+	}
 }
 
 func TestListCommandSupportsJSONFormat(t *testing.T) {
@@ -101,6 +129,28 @@ file = "`+sourcePath+`"
 	}
 }
 
+func TestListCommandJSONIncludesHomepage(t *testing.T) {
+	tempDir := t.TempDir()
+	sourcePath := writeTestCompletionSource(t, tempDir)
+	writeProjectConfig(t, tempDir, `[tools.local-tool]
+scopes = ["project"]
+check = false
+homepage = "https://example.com/local-tool"
+file = "`+sourcePath+`"
+`)
+	restoreWorkingDir := chdir(t, tempDir)
+	defer restoreWorkingDir()
+
+	buffer := new(bytes.Buffer)
+	command := newTestRootCommand(buffer, "list", "--scope", "project", "--format", "json")
+	if err := command.Execute(); err != nil {
+		t.Fatalf("execute list command: %v", err)
+	}
+	if !strings.Contains(buffer.String(), `"homepage": "https://example.com/local-tool"`) {
+		t.Fatalf("homepage missing from json output: %q", buffer.String())
+	}
+}
+
 func TestListCommandShowsUnavailableTool(t *testing.T) {
 	tempDir := t.TempDir()
 	sourcePath := writeTestCompletionSource(t, tempDir)
@@ -121,6 +171,116 @@ file = "`+sourcePath+`"
 	output := buffer.String()
 	if !strings.Contains(output, "local-tool") || !strings.Contains(output, "no") {
 		t.Fatalf("unexpected output: %q", output)
+	}
+}
+
+func TestInfoCommandShowsMergedToolDetails(t *testing.T) {
+	tempDir := t.TempDir()
+	sourcePath := writeTestCompletionSource(t, tempDir)
+	writeProjectConfig(t, tempDir, `[tools.local-tool]
+scopes = ["project"]
+check = false
+homepage = "https://example.com/local-tool"
+pre-command = ["prepare", "local-tool"]
+env = { ZCS_TEST = "value" }
+file = "`+sourcePath+`"
+`)
+	restoreWorkingDir := chdir(t, tempDir)
+	defer restoreWorkingDir()
+
+	buffer := new(bytes.Buffer)
+	command := newTestRootCommand(buffer, "info", "local-tool")
+	if err := command.Execute(); err != nil {
+		t.Fatalf("execute info command: %v", err)
+	}
+	output := buffer.String()
+	for _, expected := range []string{"local-tool", "enabled", "https://example.com/local-tool", "project", "prepare local-tool", "ZCS_TEST=value", sourcePath, "project config"} {
+		if !strings.Contains(output, expected) {
+			t.Fatalf("expected %q in output: %q", expected, output)
+		}
+	}
+}
+
+func TestConfiguredToolRejectsMissingRequiredFields(t *testing.T) {
+	tests := []struct {
+		name    string
+		config  map[string]any
+		wantErr string
+	}{
+		{
+			name:    "scopes",
+			config:  map[string]any{"command": []any{"local-tool"}},
+			wantErr: `tool "local-tool" has invalid scopes config`,
+		},
+		{
+			name:    "source",
+			config:  map[string]any{"scopes": []any{"project"}},
+			wantErr: `tool "local-tool" has invalid source config`,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			loadedRegistry := LoadedRegistry{Registry: map[string]any{
+				"tools": map[string]any{"local-tool": test.config},
+			}}
+
+			_, err := configuredTool(loadedRegistry, "local-tool")
+			if err == nil || err.Error() != test.wantErr {
+				t.Fatalf("unexpected error: %v", err)
+			}
+		})
+	}
+}
+
+func TestInfoCommandShowsDisabledTool(t *testing.T) {
+	tempDir := t.TempDir()
+	writeProjectConfig(t, tempDir, `[tools.local-tool]
+disabled = true
+homepage = "https://example.com/local-tool"
+`)
+	restoreWorkingDir := chdir(t, tempDir)
+	defer restoreWorkingDir()
+
+	buffer := new(bytes.Buffer)
+	command := newTestRootCommand(buffer, "info", "local-tool")
+	if err := command.Execute(); err != nil {
+		t.Fatalf("execute info command: %v", err)
+	}
+	if output := buffer.String(); !strings.Contains(output, "disabled") || !strings.Contains(output, "https://example.com/local-tool") {
+		t.Fatalf("unexpected output: %q", output)
+	}
+}
+
+func TestInfoCommandRejectsUnknownTool(t *testing.T) {
+	buffer := new(bytes.Buffer)
+	command := newTestRootCommand(buffer, "info", "missing-tool")
+	if err := command.Execute(); err == nil || !strings.Contains(err.Error(), `unknown tool "missing-tool"`) {
+		t.Fatalf("unexpected error: %v", err)
+	}
+}
+
+func TestInfoCommandSupportsJSONFormat(t *testing.T) {
+	tempDir := t.TempDir()
+	sourcePath := writeTestCompletionSource(t, tempDir)
+	writeProjectConfig(t, tempDir, `[tools.local-tool]
+scopes = ["project"]
+check = false
+homepage = "https://example.com/local-tool"
+file = "`+sourcePath+`"
+`)
+	restoreWorkingDir := chdir(t, tempDir)
+	defer restoreWorkingDir()
+
+	buffer := new(bytes.Buffer)
+	command := newTestRootCommand(buffer, "info", "local-tool", "--format", "json")
+	if err := command.Execute(); err != nil {
+		t.Fatalf("execute info command: %v", err)
+	}
+	for _, expected := range []string{`"name": "local-tool"`, `"status": "enabled"`, `"homepage": "https://example.com/local-tool"`} {
+		if !strings.Contains(buffer.String(), expected) {
+			t.Fatalf("expected %q in json output: %q", expected, buffer.String())
+		}
 	}
 }
 

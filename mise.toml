@@ -90,7 +90,7 @@ run = "git grep -Ilz '' -- . {{ vars.nllint_excludes }} | xargs -0 nllint --fix 
 description = """
 Run read-only checks for Go modules, maintained completions, newlines, typos, formatting, GitHub Actions, lint, build, and tests"""
 run = [
-  { tasks = [ "mod:tidy:check", "completions:check", "newline:check", "typos:check", "build:check" ] },
+  { tasks = [ "mod:tidy:check", "completions:check", "registry:check", "newline:check", "typos:check", "build:check" ] },
   { task = "leaks:check" },
   { task = "actions:check" },
   { task = "lint" },
@@ -143,6 +143,10 @@ run = "go run ./cmd/zcs-completion-gen"
 [tasks.'completions:check']
 description = "Check whether maintained static zsh completion scripts match CUE specs"
 run = "go run ./cmd/zcs-completion-gen --check"
+
+[tasks.'registry:check']
+description = "Validate built-in registry metadata"
+run = "go run ./cmd/zcs-registry-lint"
 
 [tasks.'completions:shell']
 description = "Open an interactive zsh with maintained completions loaded"
