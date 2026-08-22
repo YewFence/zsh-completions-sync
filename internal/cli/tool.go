@@ -37,7 +37,7 @@ type ListedTool struct {
 	Name          string            `json:"name"`
 	Status        string            `json:"status"`
 	Available     *bool             `json:"available"`
-	Homepage      string            `json:"homepage,omitempty"`
+	Homepage      string            `json:"homepage"`
 	Scopes        []string          `json:"scopes"`
 	PreCommand    []string          `json:"pre_command,omitempty"`
 	Env           map[string]string `json:"env,omitempty"`
