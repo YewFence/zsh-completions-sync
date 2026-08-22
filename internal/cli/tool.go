@@ -310,15 +310,13 @@ func configuredTool(loadedRegistry LoadedRegistry, name string) (ListedTool, err
 	row := ListedTool{Name: name, Status: "enabled", Homepage: parseHomepage(config), Source: "-", ConfigSources: toolConfigSources(loadedRegistry.Layers, name)}
 	if toolDisabled(config) {
 		row.Status = "disabled"
-	}
-	if raw, exists := config["scopes"]; exists {
-		scopes, valid := parseScopes(raw)
+	} else {
+		scopes, valid := parseScopes(config["scopes"])
 		if !valid {
 			return ListedTool{}, fmt.Errorf("tool %q has invalid scopes config", name)
 		}
 		row.Scopes = sortedScopes(scopes)
-	}
-	if _, exists := config["command"]; exists || config["file"] != nil {
+
 		source, valid := parseSource(config)
 		if !valid {
 			return ListedTool{}, fmt.Errorf("tool %q has invalid source config", name)

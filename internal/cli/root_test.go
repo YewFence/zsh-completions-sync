@@ -201,6 +201,38 @@ file = "`+sourcePath+`"
 	}
 }
 
+func TestConfiguredToolRejectsMissingRequiredFields(t *testing.T) {
+	tests := []struct {
+		name    string
+		config  map[string]any
+		wantErr string
+	}{
+		{
+			name:    "scopes",
+			config:  map[string]any{"command": []any{"local-tool"}},
+			wantErr: `tool "local-tool" has invalid scopes config`,
+		},
+		{
+			name:    "source",
+			config:  map[string]any{"scopes": []any{"project"}},
+			wantErr: `tool "local-tool" has invalid source config`,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			loadedRegistry := LoadedRegistry{Registry: map[string]any{
+				"tools": map[string]any{"local-tool": test.config},
+			}}
+
+			_, err := configuredTool(loadedRegistry, "local-tool")
+			if err == nil || err.Error() != test.wantErr {
+				t.Fatalf("unexpected error: %v", err)
+			}
+		})
+	}
+}
+
 func TestInfoCommandShowsDisabledTool(t *testing.T) {
 	tempDir := t.TempDir()
 	writeProjectConfig(t, tempDir, `[tools.local-tool]
