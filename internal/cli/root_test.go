@@ -174,6 +174,84 @@ file = "`+sourcePath+`"
 	}
 }
 
+func TestInfoCommandShowsMergedToolDetails(t *testing.T) {
+	tempDir := t.TempDir()
+	sourcePath := writeTestCompletionSource(t, tempDir)
+	writeProjectConfig(t, tempDir, `[tools.local-tool]
+scopes = ["project"]
+check = false
+homepage = "https://example.com/local-tool"
+pre-command = ["prepare", "local-tool"]
+env = { ZCS_TEST = "value" }
+file = "`+sourcePath+`"
+`)
+	restoreWorkingDir := chdir(t, tempDir)
+	defer restoreWorkingDir()
+
+	buffer := new(bytes.Buffer)
+	command := newTestRootCommand(buffer, "info", "local-tool")
+	if err := command.Execute(); err != nil {
+		t.Fatalf("execute info command: %v", err)
+	}
+	output := buffer.String()
+	for _, expected := range []string{"local-tool", "enabled", "https://example.com/local-tool", "project", "prepare local-tool", "ZCS_TEST=value", sourcePath, "project config"} {
+		if !strings.Contains(output, expected) {
+			t.Fatalf("expected %q in output: %q", expected, output)
+		}
+	}
+}
+
+func TestInfoCommandShowsDisabledTool(t *testing.T) {
+	tempDir := t.TempDir()
+	writeProjectConfig(t, tempDir, `[tools.local-tool]
+disabled = true
+homepage = "https://example.com/local-tool"
+`)
+	restoreWorkingDir := chdir(t, tempDir)
+	defer restoreWorkingDir()
+
+	buffer := new(bytes.Buffer)
+	command := newTestRootCommand(buffer, "info", "local-tool")
+	if err := command.Execute(); err != nil {
+		t.Fatalf("execute info command: %v", err)
+	}
+	if output := buffer.String(); !strings.Contains(output, "disabled") || !strings.Contains(output, "https://example.com/local-tool") {
+		t.Fatalf("unexpected output: %q", output)
+	}
+}
+
+func TestInfoCommandRejectsUnknownTool(t *testing.T) {
+	buffer := new(bytes.Buffer)
+	command := newTestRootCommand(buffer, "info", "missing-tool")
+	if err := command.Execute(); err == nil || !strings.Contains(err.Error(), `unknown tool "missing-tool"`) {
+		t.Fatalf("unexpected error: %v", err)
+	}
+}
+
+func TestInfoCommandSupportsJSONFormat(t *testing.T) {
+	tempDir := t.TempDir()
+	sourcePath := writeTestCompletionSource(t, tempDir)
+	writeProjectConfig(t, tempDir, `[tools.local-tool]
+scopes = ["project"]
+check = false
+homepage = "https://example.com/local-tool"
+file = "`+sourcePath+`"
+`)
+	restoreWorkingDir := chdir(t, tempDir)
+	defer restoreWorkingDir()
+
+	buffer := new(bytes.Buffer)
+	command := newTestRootCommand(buffer, "info", "local-tool", "--format", "json")
+	if err := command.Execute(); err != nil {
+		t.Fatalf("execute info command: %v", err)
+	}
+	for _, expected := range []string{`"name": "local-tool"`, `"status": "enabled"`, `"homepage": "https://example.com/local-tool"`} {
+		if !strings.Contains(buffer.String(), expected) {
+			t.Fatalf("expected %q in json output: %q", expected, buffer.String())
+		}
+	}
+}
+
 func TestGenerateCommandCompletesToolArgs(t *testing.T) {
 	tempDir := t.TempDir()
 	localSourcePath := writeNamedTestCompletionSource(t, tempDir, "local-tool")

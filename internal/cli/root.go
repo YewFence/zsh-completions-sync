@@ -29,6 +29,7 @@ func NewRootCommand(version string) *cobra.Command {
 	rootCmd.AddCommand(newInitCommand())
 	rootCmd.AddCommand(newCheckUpdateCommand())
 	rootCmd.AddCommand(newListCommand())
+	rootCmd.AddCommand(newInfoCommand())
 	rootCmd.AddCommand(newVersionCommand(version))
 	return rootCmd
 }
@@ -193,6 +194,49 @@ func newListCommand() *cobra.Command {
 		if scope != "" && scope != "global" && scope != "project" {
 			return fmt.Errorf("invalid scope %q, expected global or project", scope)
 		}
+		if format != "table" && format != "json" {
+			return fmt.Errorf("invalid format %q, expected table or json", format)
+		}
+		return nil
+	}
+	return command
+}
+
+func newInfoCommand() *cobra.Command {
+	var format string
+
+	command := &cobra.Command{
+		Use:   "info <tool>",
+		Short: "Show detailed information about a configured completion tool.",
+		Args:  cobra.ExactArgs(1),
+		ValidArgsFunction: func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+			projectDir, err := os.Getwd()
+			if err != nil {
+				return nil, cobra.ShellCompDirectiveError
+			}
+			loadedRegistry, err := loadRegistry(projectDir, cmd.ErrOrStderr())
+			if err != nil {
+				return nil, cobra.ShellCompDirectiveError
+			}
+			return completeToolNames(allConfiguredTools(loadedRegistry.Registry), args), cobra.ShellCompDirectiveNoFileComp
+		},
+		RunE: func(cmd *cobra.Command, args []string) error {
+			projectDir, err := os.Getwd()
+			if err != nil {
+				return err
+			}
+			loadedRegistry, err := loadRegistry(projectDir, cmd.ErrOrStderr())
+			if err != nil {
+				return err
+			}
+			return infoTool(loadedRegistry, args[0], format, cmd.OutOrStdout())
+		},
+	}
+	command.Flags().StringVar(&format, "format", "table", "Output format: table or json.")
+	_ = command.RegisterFlagCompletionFunc("format", func(*cobra.Command, []string, string) ([]string, cobra.ShellCompDirective) {
+		return []string{"table", "json"}, cobra.ShellCompDirectiveNoFileComp
+	})
+	command.PreRunE = func(cmd *cobra.Command, args []string) error {
 		if format != "table" && format != "json" {
 			return fmt.Errorf("invalid format %q, expected table or json", format)
 		}

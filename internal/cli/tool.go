@@ -139,6 +139,19 @@ func completeToolNames(tools []CompletionTool, args []string) []string {
 	return names
 }
 
+func allConfiguredTools(registry map[string]any) []CompletionTool {
+	table, ok := registry["tools"].(map[string]any)
+	if !ok {
+		return nil
+	}
+	tools := make([]CompletionTool, 0, len(table))
+	for name := range table {
+		tools = append(tools, CompletionTool{Name: name})
+	}
+	sort.Slice(tools, func(i, j int) bool { return tools[i].Name < tools[j].Name })
+	return tools
+}
+
 func parseScopes(value any) (map[string]struct{}, bool) {
 	values, ok := value.([]any)
 	if !ok || len(values) == 0 {
@@ -259,6 +272,80 @@ func listTools(loadedRegistry LoadedRegistry, scope string, format string, stdou
 	return printTable([]string{"Tool", "Available", "Homepage"}, tableRows, stdout)
 }
 
+func infoTool(loadedRegistry LoadedRegistry, name string, format string, stdout io.Writer) error {
+	row, err := configuredTool(loadedRegistry, name)
+	if err != nil {
+		return err
+	}
+	if format == "json" {
+		encoder := json.NewEncoder(stdout)
+		encoder.SetIndent("", "  ")
+		return encoder.Encode(row)
+	}
+
+	rows := [][]string{
+		{"Tool", row.Name},
+		{"Status", row.Status},
+		{"Available", formatAvailability(row.Available)},
+		{"Homepage", formatHomepage(row.Homepage)},
+		{"Scopes", formatScopes(row.Scopes)},
+		{"Source", row.Source},
+		{"Pre-command", formatOptionalCommand(row.PreCommand)},
+		{"Environment", formatEnv(row.Env)},
+		{"Config loaded from", strings.Join(row.ConfigSources, " -> ")},
+	}
+	return printTable([]string{"Field", "Value"}, rows, stdout)
+}
+
+func configuredTool(loadedRegistry LoadedRegistry, name string) (ListedTool, error) {
+	table, ok := loadedRegistry.Registry["tools"].(map[string]any)
+	if !ok {
+		return ListedTool{}, fmt.Errorf("unknown tool %q", name)
+	}
+	config, ok := table[name].(map[string]any)
+	if !ok {
+		return ListedTool{}, fmt.Errorf("unknown tool %q", name)
+	}
+
+	row := ListedTool{Name: name, Status: "enabled", Homepage: parseHomepage(config), Source: "-", ConfigSources: toolConfigSources(loadedRegistry.Layers, name)}
+	if toolDisabled(config) {
+		row.Status = "disabled"
+	}
+	if raw, exists := config["scopes"]; exists {
+		scopes, valid := parseScopes(raw)
+		if !valid {
+			return ListedTool{}, fmt.Errorf("tool %q has invalid scopes config", name)
+		}
+		row.Scopes = sortedScopes(scopes)
+	}
+	if _, exists := config["command"]; exists || config["file"] != nil {
+		source, valid := parseSource(config)
+		if !valid {
+			return ListedTool{}, fmt.Errorf("tool %q has invalid source config", name)
+		}
+		row.Source = formatSource(source)
+	}
+	preCommand, valid := parsePreCommand(config["pre-command"])
+	if !valid {
+		return ListedTool{}, fmt.Errorf("tool %q has invalid pre-command config", name)
+	}
+	row.PreCommand = preCommand
+	env, valid := parseEnv(config["env"])
+	if !valid {
+		return ListedTool{}, fmt.Errorf("tool %q has invalid env config", name)
+	}
+	row.Env = env
+	if row.Status == "enabled" {
+		check, valid := parseCheck(config["check"], name)
+		if !valid {
+			return ListedTool{}, fmt.Errorf("tool %q has invalid check config", name)
+		}
+		available := toolEnabled(check, env)
+		row.Available = &available
+	}
+	return row, nil
+}
+
 func listedTools(loadedRegistry LoadedRegistry, scope string, stderr io.Writer) []ListedTool {
 	toolTable, ok := loadedRegistry.Registry["tools"].(map[string]any)
 	if !ok {
@@ -363,6 +450,13 @@ func sortedScopes(scopes map[string]struct{}) []string {
 	return values
 }
 
+func formatScopes(scopes []string) string {
+	if len(scopes) == 0 {
+		return "-"
+	}
+	return strings.Join(scopes, ", ")
+}
+
 func formatAvailability(available *bool) string {
 	if available == nil {
 		return "disabled"
@@ -386,6 +480,29 @@ func formatHomepage(homepage string) string {
 		return "-"
 	}
 	return homepage
+}
+
+func formatOptionalCommand(command []string) string {
+	if len(command) == 0 {
+		return "-"
+	}
+	return formatCommand(command)
+}
+
+func formatEnv(env map[string]string) string {
+	if len(env) == 0 {
+		return "-"
+	}
+	keys := make([]string, 0, len(env))
+	for key := range env {
+		keys = append(keys, key)
+	}
+	sort.Strings(keys)
+	pairs := make([]string, 0, len(keys))
+	for _, key := range keys {
+		pairs = append(pairs, fmt.Sprintf("%s=%s", key, env[key]))
+	}
+	return strings.Join(pairs, " ")
 }
 
 func formatSource(source any) string {
