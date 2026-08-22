@@ -37,6 +37,7 @@ type ListedTool struct {
 	Name          string            `json:"name"`
 	Status        string            `json:"status"`
 	Available     *bool             `json:"available"`
+	Homepage      string            `json:"homepage,omitempty"`
 	Scopes        []string          `json:"scopes"`
 	PreCommand    []string          `json:"pre_command,omitempty"`
 	Env           map[string]string `json:"env,omitempty"`
@@ -251,16 +252,11 @@ func listTools(loadedRegistry LoadedRegistry, scope string, format string, stdou
 	for _, row := range rows {
 		tableRows = append(tableRows, []string{
 			row.Name,
-			row.Status,
 			formatAvailability(row.Available),
-			formatScopes(row.Scopes),
-			formatOptionalCommand(row.PreCommand),
-			formatEnv(row.Env),
-			row.Source,
-			strings.Join(row.ConfigSources, " -> "),
+			formatHomepage(row.Homepage),
 		})
 	}
-	return printTable([]string{"Tool", "Status", "Available", "Scopes", "Pre-command", "Env", "Source", "Config loaded from"}, tableRows, stdout)
+	return printTable([]string{"Tool", "Available", "Homepage"}, tableRows, stdout)
 }
 
 func listedTools(loadedRegistry LoadedRegistry, scope string, stderr io.Writer) []ListedTool {
@@ -286,6 +282,7 @@ func listedTools(loadedRegistry LoadedRegistry, scope string, stderr io.Writer) 
 				Name:          name,
 				Status:        "disabled",
 				Available:     nil,
+				Homepage:      parseHomepage(config),
 				Scopes:        nil,
 				PreCommand:    nil,
 				Env:           nil,
@@ -332,6 +329,7 @@ func listedTools(loadedRegistry LoadedRegistry, scope string, stderr io.Writer) 
 			Name:          name,
 			Status:        "enabled",
 			Available:     &available,
+			Homepage:      parseHomepage(config),
 			Scopes:        sortedScopes(scopes),
 			PreCommand:    preCommand,
 			Env:           env,
@@ -365,21 +363,29 @@ func sortedScopes(scopes map[string]struct{}) []string {
 	return values
 }
 
-func formatScopes(scopes []string) string {
-	if len(scopes) == 0 {
-		return "-"
-	}
-	return strings.Join(scopes, ", ")
-}
-
 func formatAvailability(available *bool) string {
 	if available == nil {
-		return "-"
+		return "disabled"
 	}
 	if *available {
 		return "yes"
 	}
 	return "no"
+}
+
+func parseHomepage(config map[string]any) string {
+	homepage, ok := config["homepage"].(string)
+	if !ok {
+		return ""
+	}
+	return homepage
+}
+
+func formatHomepage(homepage string) string {
+	if homepage == "" {
+		return "-"
+	}
+	return homepage
 }
 
 func formatSource(source any) string {
@@ -404,30 +410,6 @@ func formatSource(source any) string {
 	default:
 		return "unknown"
 	}
-}
-
-func formatOptionalCommand(command []string) string {
-	if len(command) == 0 {
-		return "-"
-	}
-	return formatCommand(command)
-}
-
-func formatEnv(env map[string]string) string {
-	if len(env) == 0 {
-		return "-"
-	}
-	keys := make([]string, 0, len(env))
-	for key := range env {
-		keys = append(keys, key)
-	}
-	sort.Strings(keys)
-
-	pairs := make([]string, 0, len(keys))
-	for _, key := range keys {
-		pairs = append(pairs, fmt.Sprintf("%s=%s", key, env[key]))
-	}
-	return strings.Join(pairs, " ")
 }
 
 func printTable(headers []string, rows [][]string, stdout io.Writer) error {

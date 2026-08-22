@@ -74,6 +74,34 @@ func TestListCommand(t *testing.T) {
 	if !strings.Contains(output, "Available") {
 		t.Fatalf("availability column missing: %q", output)
 	}
+	for _, unexpected := range []string{"Scopes", "Pre-command", "Config loaded from"} {
+		if strings.Contains(output, unexpected) {
+			t.Fatalf("compact table contains implementation column %q: %q", unexpected, output)
+		}
+	}
+}
+
+func TestListCommandRendersHomepage(t *testing.T) {
+	tempDir := t.TempDir()
+	sourcePath := writeTestCompletionSource(t, tempDir)
+	writeProjectConfig(t, tempDir, `[tools.local-tool]
+scopes = ["project"]
+check = false
+homepage = "https://example.com/local-tool"
+file = "`+sourcePath+`"
+`)
+	restoreWorkingDir := chdir(t, tempDir)
+	defer restoreWorkingDir()
+
+	buffer := new(bytes.Buffer)
+	command := newTestRootCommand(buffer, "list", "--scope", "project")
+	if err := command.Execute(); err != nil {
+		t.Fatalf("execute list command: %v", err)
+	}
+
+	if !strings.Contains(buffer.String(), "https://example.com/local-tool") {
+		t.Fatalf("homepage missing from output: %q", buffer.String())
+	}
 }
 
 func TestListCommandSupportsJSONFormat(t *testing.T) {
@@ -98,6 +126,28 @@ file = "`+sourcePath+`"
 		if !strings.Contains(output, expected) {
 			t.Fatalf("expected %q in json output: %q", expected, output)
 		}
+	}
+}
+
+func TestListCommandJSONIncludesHomepage(t *testing.T) {
+	tempDir := t.TempDir()
+	sourcePath := writeTestCompletionSource(t, tempDir)
+	writeProjectConfig(t, tempDir, `[tools.local-tool]
+scopes = ["project"]
+check = false
+homepage = "https://example.com/local-tool"
+file = "`+sourcePath+`"
+`)
+	restoreWorkingDir := chdir(t, tempDir)
+	defer restoreWorkingDir()
+
+	buffer := new(bytes.Buffer)
+	command := newTestRootCommand(buffer, "list", "--scope", "project", "--format", "json")
+	if err := command.Execute(); err != nil {
+		t.Fatalf("execute list command: %v", err)
+	}
+	if !strings.Contains(buffer.String(), `"homepage": "https://example.com/local-tool"`) {
+		t.Fatalf("homepage missing from json output: %q", buffer.String())
 	}
 }
 
