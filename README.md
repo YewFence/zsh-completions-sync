@@ -47,6 +47,9 @@ mise run cli:install
 # 查看支持的全局工具
 zcs list --scope global
 
+# 查看一个工具的合并配置
+zcs info mise
+
 # 生成全局补全脚本
 zcs generate
 ```
@@ -88,6 +91,7 @@ command = ["my-tool", "completion", "zsh"]
 | --- | --- |
 | `zcs list --scope global` | 查看全局补全工具 |
 | `zcs list --scope project` | 查看项目补全工具 |
+| `zcs info <tool>` | 查看单个工具的详细配置 |
 | `zcs generate` | 生成全局补全 |
 | `zcs generate --scope project` | 生成项目补全 |
 | `zcs generate pnpm` | 只生成指定工具的全局补全 |

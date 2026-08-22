@@ -20,9 +20,11 @@
 [tools.mise]
 scopes = ["global"]
 command = ["mise", "completion", "zsh"]
+homepage = "https://mise.jdx.dev/"
 ```
 
 `scopes` 支持 `global` 和 `project`。`command` 是生成补全脚本的命令，`zcs` 会读取它的标准输出作为补全内容。
+`homepage` 是工具项目主页或仓库地址，仅用于 `zcs list` 和 `zcs info` 展示，不会触发联网或安装行为；用户和项目配置可以省略它。
 
 如果生成命令需要额外环境变量，可以用 `env` 声明。`env` 会传给 `command`、命令形式的 `check` 和 `pre-command`。
 
@@ -43,6 +45,17 @@ disabled = true
 ```
 
 禁用后的工具不会出现在生成列表里。`zcs list` 仍然会显示它的禁用状态，方便确认覆盖是否生效。
+
+## 查看工具详情
+
+`zcs list` 提供工具、可用状态和主页的紧凑概览。需要检查合并后的完整配置时，可以运行 `zcs info`：
+
+```zsh
+zcs info mise
+zcs info mise --format json
+```
+
+`info` 会读取内置、用户和项目三层注册表，展示状态、可用性、主页、作用域、来源、预处理命令、环境变量和配置来源。禁用工具也可以查看；未知工具会返回错误。
 
 ## 本地文件来源
 
