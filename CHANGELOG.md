@@ -1,3 +1,9 @@
+## What's Changed in 0.4.0
+* add niri and dms by @YewFence
+* Refactor/builtin registry by @YewFence in [#6](https://github.com/YewFence/zsh-completions-sync/pull/6)
+
+**Full Changelog**: https://github.com/YewFence/zsh-completions-sync/compare/v0.3.0...v0.4.0
+
 ## What's Changed in 0.3.0
 * feat(check-update): warn about stale completions instead of auto-generating by @YewFence in [#5](https://github.com/YewFence/zsh-completions-sync/pull/5)
 * update a simple example about custom tool in user config file by @YewFence
