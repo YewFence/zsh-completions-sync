@@ -137,5 +137,15 @@ command = ["fnox", "completion", "zsh"]
 
 [tools.gcx]
 homepage = "https://github.com/grafana/gcx"
-scopes = ["global"]
+scopes = ["global", "project"]
 command = ["gcx", "completion", "zsh"]
+
+[tools.niri]
+homepage = "https://github.com/niri-wm/niri"
+scopes = ["global"]
+command = ["niri", "completions", "zsh"]
+
+[tools.dms]
+homepage = ""
+scopes = ["global"]
+command = ["dms", "completion", "zsh"]
