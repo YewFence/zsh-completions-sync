@@ -146,6 +146,6 @@ scopes = ["global"]
 command = ["niri", "completions", "zsh"]
 
 [tools.dms]
-homepage = ""
+homepage = "https://danklinux.com/"
 scopes = ["global"]
 command = ["dms", "completion", "zsh"]
