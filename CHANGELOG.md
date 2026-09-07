@@ -1,3 +1,14 @@
+## What's Changed in 0.4.1
+* chore(mise-deps): update mise tools by @renovate[bot] in [#10](https://github.com/YewFence/zsh-completions-sync/pull/10)
+* chore(go-deps): update dependency go to v1.27.1 by @renovate[bot] in [#9](https://github.com/YewFence/zsh-completions-sync/pull/9)
+* bump github action version by @YewFence
+* add homepage of dms by @YewFence
+
+### New Contributors
+* @renovate[bot] made their first contribution in [#10](https://github.com/YewFence/zsh-completions-sync/pull/10)
+
+**Full Changelog**: https://github.com/YewFence/zsh-completions-sync/compare/v0.4.0...v0.4.1
+
 ## What's Changed in 0.4.0
 * add niri and dms by @YewFence
 * Refactor/builtin registry by @YewFence in [#6](https://github.com/YewFence/zsh-completions-sync/pull/6)
