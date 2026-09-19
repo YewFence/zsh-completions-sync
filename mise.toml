@@ -17,7 +17,7 @@ golangci-lint = "2.13.2"
 # https://github.com/suzuki-shunsuke/pinact
 pinact = "4.1.1"
 # https://github.com/crate-ci/typos
-typos = "1.50.1"
+typos = "1.50.2"
 betterleaks = "v1.8.1"
 actionlint = "1"
 cue = "latest"
