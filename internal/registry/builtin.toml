@@ -149,3 +149,8 @@ command = ["niri", "completions", "zsh"]
 homepage = "https://danklinux.com/"
 scopes = ["global"]
 command = ["dms", "completion", "zsh"]
+
+[tools.tailscale]
+homepage = "https://tailscale.com/"
+scopes = ["global"]
+command = ["tailscale", "completion", "zsh"]
