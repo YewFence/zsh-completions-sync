@@ -1,3 +1,8 @@
+## What's Changed in 0.5.0
+* add tailscale in builtin registry by @YewFence
+
+**Full Changelog**: https://github.com/YewFence/zsh-completions-sync/compare/v0.4.1...v0.5.0
+
 ## What's Changed in 0.4.1
 * chore(mise-deps): update mise tools by @renovate[bot] in [#10](https://github.com/YewFence/zsh-completions-sync/pull/10)
 * chore(go-deps): update dependency go to v1.27.1 by @renovate[bot] in [#9](https://github.com/YewFence/zsh-completions-sync/pull/9)
