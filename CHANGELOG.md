@@ -1,3 +1,15 @@
+## What's Changed in 0.5.0
+* reapply go-cli template (main@563820a) by @YewFence
+* chore(npm-deps): lock file maintenance by @renovate[bot] in [#14](https://github.com/YewFence/zsh-completions-sync/pull/14)
+* chore(mise-deps): lock file maintenance by @renovate[bot] in [#13](https://github.com/YewFence/zsh-completions-sync/pull/13)
+* chore(gomod-deps): update go modules by @renovate[bot] in [#12](https://github.com/YewFence/zsh-completions-sync/pull/12)
+* ci(deps): update github actions by @renovate[bot] in [#17](https://github.com/YewFence/zsh-completions-sync/pull/17)
+* chore(mise-deps): update mise tools by @renovate[bot] in [#15](https://github.com/YewFence/zsh-completions-sync/pull/15)
+* chore(go-deps): update dependency go to v1.27.2 by @renovate[bot] in [#18](https://github.com/YewFence/zsh-completions-sync/pull/18)
+* add tailscale in builtin registry by @YewFence
+
+**Full Changelog**: https://github.com/YewFence/zsh-completions-sync/compare/v0.4.1...v0.5.0
+
 ## What's Changed in 0.4.1
 * chore(mise-deps): update mise tools by @renovate[bot] in [#10](https://github.com/YewFence/zsh-completions-sync/pull/10)
 * chore(go-deps): update dependency go to v1.27.1 by @renovate[bot] in [#9](https://github.com/YewFence/zsh-completions-sync/pull/9)
