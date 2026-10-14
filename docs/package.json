@@ -1,5 +1,5 @@
 {
-  "name": "zsh-completions-sync-docs",
+  "name": "zcs-docs",
   "private": true,
   "type": "module",
   "scripts": {
