@@ -1,3 +1,15 @@
+## What's Changed in 0.5.1
+* chore(mise-deps): update mise tools by @renovate[bot] in [#19](https://github.com/YewFence/zsh-completions-sync/pull/19)
+* ci(deps): update github actions to v5.2.8 by @renovate[bot] in [#25](https://github.com/YewFence/zsh-completions-sync/pull/25)
+* chore(gomod-deps): update go modules by @renovate[bot] in [#26](https://github.com/YewFence/zsh-completions-sync/pull/26)
+* chore(go-deps): update go module directive to v1.27.4 by @renovate[bot] in [#28](https://github.com/YewFence/zsh-completions-sync/pull/28)
+* chore(mise-deps): lock file maintenance by @renovate[bot] in [#21](https://github.com/YewFence/zsh-completions-sync/pull/21)
+* chore(npm-deps): lock file maintenance by @renovate[bot] in [#22](https://github.com/YewFence/zsh-completions-sync/pull/22)
+* ci(deps): update github actions to v5.2.2 by @renovate[bot] in [#20](https://github.com/YewFence/zsh-completions-sync/pull/20)
+* chore(go-deps): update go module directive to v1.27.3 by @renovate[bot] in [#23](https://github.com/YewFence/zsh-completions-sync/pull/23)
+
+**Full Changelog**: https://github.com/YewFence/zsh-completions-sync/compare/v0.5.0...v0.5.1
+
 ## What's Changed in 0.5.0
 * reapply go-cli template (main@563820a) by @YewFence
 * chore(npm-deps): lock file maintenance by @renovate[bot] in [#14](https://github.com/YewFence/zsh-completions-sync/pull/14)
